@@ -1,6 +1,6 @@
 ﻿namespace Shared.Database;
 
-internal interface ILoginDatabase : IDatabase
+public interface ILoginDatabase : IDatabase
 {
     public string GetSessionKey { get; }
     public string GetUserAuthData { get; }

@@ -28,7 +28,7 @@ public class SRP6
     public byte[] ServerPublicKey { get; init; }
 
     private readonly BigInteger _verifier;
-    private readonly IDatabase _db;
+    private readonly ILoginDatabase _db;
 
     static SRP6()
     {
@@ -70,7 +70,7 @@ public class SRP6
 
     public static ReadOnlySpan<byte> GenerateSalt() => RandomNumberGenerator.GetBytes(L);
 
-    public SRP6(byte[] Verifier, byte[] Salt, IDatabase db)
+    public SRP6(byte[] Verifier, byte[] Salt, ILoginDatabase db)
     {
         ArgumentNullException.ThrowIfNull(Verifier, nameof(Verifier));
         if (Verifier.Length != L)

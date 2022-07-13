@@ -6,10 +6,12 @@ public abstract class SqlServerDatabase : IDatabase
 {
     private readonly SqlConnection _connection;
 
-    public SqlServerDatabase(string connectionString)
+    public SqlServerDatabase(string connectionString, string dbName)
     {
         _connection = new SqlConnection(connectionString);
         _connection.Open();
+        if (!string.IsNullOrEmpty(dbName))
+            _connection.ChangeDatabase(dbName);
     }
 
     public void ExecuteNonQuery(string statement, Dictionary<string, object> parameters)

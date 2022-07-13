@@ -20,7 +20,7 @@ public class Client
     private Server _server;
     private MemoryStream _smsg;
     private bool _authed;
-    private IDatabase _db;
+    private ILoginDatabase _db;
 
     public Client(TcpClient client, Server server)
     {

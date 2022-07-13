@@ -21,7 +21,7 @@ class Program
             {
                 Timeout = TimeSpan.FromSeconds(3),
                 WriteTimeout = TimeSpan.FromMilliseconds(10),
-                LoginDatabase = new SqlServerLoginDatabase(connString),
+                LoginDatabase = new SqlServerLoginDatabase(connString, ""),
             };
 
             var realm1 = new Realms.Realm(1, "Для гладиаторов", "127.0.0.1:8085")
