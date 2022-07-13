@@ -43,11 +43,11 @@ public class RealmList
         stream.Write(buffer);
         foreach (var realm in _realms.Values)
         {
-            var accountValues = accountValuesForRealm.GetValueOrDefault(realm.ID, (false, (byte)0));
+            (bool locked, byte characters) = accountValuesForRealm.GetValueOrDefault(realm.ID, (false, (byte)0));
             stream.WriteByte((byte)realm.RealmType);
-            stream.WriteByte((byte)(accountValues.Item1 ? 1 : 0));
+            stream.WriteByte((byte)(realm.Locked && locked ? 1 : 0));
             stream.Write(realm.GetPrefixBytes());
-            stream.WriteByte(accountValues.Item2);
+            stream.WriteByte(characters);
             stream.Write(realm.GetSuffixBytes());
         }
     }

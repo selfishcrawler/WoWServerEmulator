@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 
 using AuthServer.AuthStructs;
 using AuthServer.Cryptography;
@@ -21,6 +22,9 @@ public class Client
     private MemoryStream _smsg;
     private bool _authed;
     private ILoginDatabase _db;
+    //reconnect
+    private byte[] _sessionKey;
+    private byte[] _serverData;
 
     public Client(TcpClient client, Server server)
     {
@@ -132,6 +136,7 @@ public class Client
         {
             _smsg.Write(AuthResult.WOW_FAIL_UNKNOWN_ACCOUNT);
             _stream.PushPacket(_smsg);
+            return;
         }
         _srp = new(verifier, salt, _server.LoginDatabase);
 
@@ -175,14 +180,66 @@ public class Client
         _stream.PushPacket(_smsg);
     }
 
-    private void HandleReconnectChallenge()
+    private unsafe void HandleReconnectChallenge()
     {
-        Log.Error("Еще не поддерживается");
+        _stream.Read(_buffer, 0, _client.Available);
+
+        AuthLogonChallengeStruct pkt;
+        fixed (byte* ptr = &_buffer[0])
+            pkt = *(AuthLogonChallengeStruct*)ptr;
+        _username = Marshal.PtrToStringAnsi((IntPtr)pkt.AccountName);
+
+        _sessionKey = _db.ExecuteSingleValue<byte[]>(_db.GetSessionKey, new()
+        {
+            { "@Name", _username }
+        });
+
+        _smsg.Reset();
+        _smsg.Write(AuthCommand.AUTH_RECONNECT_CHALLENGE);
+        if (_sessionKey is default(byte[]))
+        {
+            _smsg.Write(AuthResult.WOW_FAIL_UNKNOWN_ACCOUNT);
+            _stream.PushPacket(_smsg);
+            return;
+        }
+        _smsg.Write(AuthResult.WOW_SUCCESS);
+        _serverData = RandomNumberGenerator.GetBytes(16);
+        _smsg.Write(_serverData);
+        for (int i = 0; i < 16; i++)
+            _smsg.WriteByte(0);
+        _stream.PushPacket(_smsg);
     }
 
-    private void HandleReconnectProof()
+    private unsafe void HandleReconnectProof()
     {
-        Log.Error("Еще не поддерживается");
+        _stream.Read(_buffer, 0, _client.Available);
+
+        AuthReconnectProofStruct pkt;
+        fixed (byte* ptr = &_buffer[0])
+            pkt = *(AuthReconnectProofStruct*)ptr;
+
+        var loginHash = System.Text.Encoding.UTF8.GetBytes(_username);
+        Span<byte> calculatedProof = stackalloc byte[72 + loginHash.Length];
+        loginHash.CopyTo(calculatedProof);
+        ReadOnlySpan<byte> clientData = new(pkt.ClientData, 16);
+        clientData.CopyTo(calculatedProof[(loginHash.Length)..]);
+        _serverData.CopyTo(calculatedProof[(loginHash.Length + 16)..]);
+        _sessionKey.CopyTo(calculatedProof[(loginHash.Length + 32)..]);
+        Span<byte> hash = stackalloc byte[20];
+        SHA1.HashData(calculatedProof, hash);
+        ReadOnlySpan<byte> clientProof = new(pkt.Proof, 20);
+
+        if (!hash.SequenceEqual(clientProof))
+        {
+            _stream.Close();
+            _client.Close();
+            return;
+        }
+        _smsg.Reset();
+        _smsg.Write(AuthCommand.AUTH_RECONNECT_PROOF);
+        _smsg.Write(AuthResult.WOW_SUCCESS);
+        _smsg.Write((ushort)0);
+        _stream.PushPacket(_smsg);
     }
 
     private void HandleRealmlist()
