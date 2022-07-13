@@ -2,6 +2,7 @@
 using System.Numerics;
 using System.Security.Cryptography;
 using System.Text;
+using Shared.Database;
 
 namespace AuthServer.Cryptography;
 
@@ -27,6 +28,7 @@ public class SRP6
     public byte[] ServerPublicKey { get; init; }
 
     private readonly BigInteger _verifier;
+    private readonly SqlServerLoginDatabase _db;
 
     static SRP6()
     {
@@ -68,7 +70,7 @@ public class SRP6
 
     public static ReadOnlySpan<byte> GenerateSalt() => RandomNumberGenerator.GetBytes(L);
 
-    public SRP6(byte[] Verifier, byte[] Salt)
+    public SRP6(byte[] Verifier, byte[] Salt, SqlServerLoginDatabase db)
     {
         ArgumentNullException.ThrowIfNull(Verifier, nameof(Verifier));
         if (Verifier.Length != L)
@@ -81,6 +83,7 @@ public class SRP6
         var interim = _K * _verifier + BigInteger.ModPow(_G, _b, _N);
         var spk = (interim % _N).ToByteArray();
         ServerPublicKey = spk.Length == L ? spk : spk[..L];
+        _db = db;
     }
 
     public ReadOnlySpan<byte> GetM2(ReadOnlySpan<byte> A, ReadOnlySpan<byte> M1, string username)
@@ -135,7 +138,11 @@ public class SRP6
         SHA1.HashData(bytes, m1);
         if (!m1.SequenceEqual(M1))
             return ReadOnlySpan<byte>.Empty;
-
+        _db.ExecuteNonQuery(_db.SetSessionKey, new()
+        {
+            { "@SessionKey", m2[52..].ToArray() },
+            { "@Name", username },
+        });
         A.CopyTo(m2);
         M1.CopyTo(m2[L..]);
         return SHA1.HashData(m2);

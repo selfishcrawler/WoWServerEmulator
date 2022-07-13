@@ -6,6 +6,7 @@ using AuthServer.AuthStructs;
 using AuthServer.Cryptography;
 using AuthServer.Enums;
 using AuthServer.Extensions;
+using Shared.Database;
 
 namespace AuthServer.Network;
 
@@ -19,6 +20,7 @@ public class Client
     private Server _server;
     private MemoryStream _smsg;
     private bool _authed;
+    private SqlServerLoginDatabase _db;
 
     public Client(TcpClient client, Server server)
     {
@@ -28,6 +30,7 @@ public class Client
         _stream.WriteTimeout = (int)_server.WriteTimeout.TotalMilliseconds;
         _stream.ReadTimeout = 1;
 
+        _db = _server.LoginDatabase;
         _buffer = new byte[200];
         _smsg = new MemoryStream(200);
         _authed = false;
@@ -46,7 +49,9 @@ public class Client
                 if (bytesRead == 0)
                 {
                     Log.Warning("Клиент разорвал соединение");
-                    break;
+                    _stream.Close();
+                    _client.Close();
+                    return;
                 }
                 AuthCommand cmd = (AuthCommand)_buffer[0];
                 Log.Message($"Получена команда {cmd}");
@@ -63,6 +68,7 @@ public class Client
                     case InvalidDataException:
                         Log.Error($"Ошибка при подключении: {ex.Message}");
                         break;
+                    case OperationCanceledException:
                     case IOException:
                         Log.Error("Превышено время ожидания на подключение клиента");
                         break;
@@ -70,11 +76,11 @@ public class Client
                         Log.Error($"Неизвестное исключение: {ex.Message}");
                         break;
                 }
+                _stream.Close();
+                _client.Close();
+                return;
             }
         }
-        _stream.Close();
-        _client.Close();
-        return;
     }
 
     private Action GetHandlerForCommand(AuthCommand cmd) => cmd switch
@@ -114,14 +120,21 @@ public class Client
         _username = Marshal.PtrToStringAnsi((IntPtr)pkt.AccountName);
         Console.WriteLine($"Account name: {_username}");
 
-        // соль и верифаер хранятся в бд, вместо генерации написать получение
-        var salt = SRP6.GenerateSalt().ToArray();
-        var verifier = SRP6.CalculateVerifier(_username, "123", salt).ToArray();
-        _srp = new(verifier, salt);
-
         _smsg.Reset();
         _smsg.Write(AuthCommand.AUTH_LOGON_CHALLENGE);
         _smsg.Write(0);
+
+        (var verifier, var salt) = _db.ExecuteSingleRaw<byte[], byte[]>(_db.GetUserAuthData, new()
+        {
+            { "@Name", _username }
+        });
+        if (verifier is default(byte[]))
+        {
+            _smsg.Write(AuthResult.WOW_FAIL_UNKNOWN_ACCOUNT);
+            _stream.PushPacket(_smsg);
+        }
+        _srp = new(verifier, salt, _server.LoginDatabase);
+
         _smsg.Write(AuthResult.WOW_SUCCESS);
         _smsg.Write(_srp.ServerPublicKey);
         _smsg.Write(1);

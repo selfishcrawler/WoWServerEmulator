@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using System.Net.Sockets;
 using AuthServer.Realms;
+using Shared.Database;
 
 namespace AuthServer.Network;
 
@@ -22,6 +23,7 @@ public class Server
         get => _cts is not null && !_cts.IsCancellationRequested;
     }
     public RealmList RealmList { get; private set; }
+    public SqlServerLoginDatabase LoginDatabase { get; init; }
 
     public Server(string ip, int port = DefaultAuthserverPort) : this(IPAddress.TryParse(ip, out IPAddress _ip) ? _ip : null, port) { }
 
