@@ -128,9 +128,9 @@ public class Client
         _smsg.Write(AuthCommand.AUTH_LOGON_CHALLENGE);
         _smsg.Write(0);
 
-        (var verifier, var salt) = _db.ExecuteSingleRaw<byte[], byte[]>(_db.GetUserAuthData, new()
+        (var verifier, var salt) = _db.ExecuteSingleRaw<byte[], byte[]>(_db.GetUserAuthData, new KeyValuePair<string, object>[]
         {
-            { "@Name", _username }
+            new ( "@Name", _username ),
         });
         if (verifier is default(byte[]))
         {
@@ -189,9 +189,9 @@ public class Client
             pkt = *(AuthLogonChallengeStruct*)ptr;
         _username = Marshal.PtrToStringAnsi((IntPtr)pkt.AccountName);
 
-        _sessionKey = _db.ExecuteSingleValue<byte[]>(_db.GetSessionKey, new()
+        _sessionKey = _db.ExecuteSingleValue<byte[]>(_db.GetSessionKey, new KeyValuePair<string, object>[]
         {
-            { "@Name", _username }
+            new ( "@Name", _username )
         });
 
         _smsg.Reset();

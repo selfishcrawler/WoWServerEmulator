@@ -2,7 +2,7 @@
 
 public interface IDatabase
 {
-    public void ExecuteNonQuery(string statement, Dictionary<string, object> parameter);
-    public TOut ExecuteSingleValue<TOut>(string statement, Dictionary<string, object> parameter);
-    public (TOut1, TOut2) ExecuteSingleRaw<TOut1, TOut2>(string statement, Dictionary<string, object> parameter);
+    public void ExecuteNonQuery(string statement, in KeyValuePair<string, object>[] parameters);
+    public TOut ExecuteSingleValue<TOut>(string statement, in KeyValuePair<string, object>[] parameters);
+    public (TOut1, TOut2) ExecuteSingleRaw<TOut1, TOut2>(string statement, in KeyValuePair<string, object>[] parameters);
 }

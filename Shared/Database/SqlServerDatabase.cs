@@ -14,13 +14,13 @@ public abstract class SqlServerDatabase : IDatabase
             _connection.ChangeDatabase(dbName);
     }
 
-    public void ExecuteNonQuery(string statement, Dictionary<string, object> parameters)
+    public void ExecuteNonQuery(string statement, in KeyValuePair<string, object>[] parameters)
     {
         SqlCommand cmd = PrepareQuery(statement, parameters);
         cmd.ExecuteNonQuery();
     }
 
-    public (TOut1, TOut2) ExecuteSingleRaw<TOut1, TOut2>(string statement, Dictionary<string, object> parameters)
+    public (TOut1, TOut2) ExecuteSingleRaw<TOut1, TOut2>(string statement, in KeyValuePair<string, object>[] parameters)
     {
         SqlCommand cmd = PrepareQuery(statement, parameters);
         var reader = cmd.ExecuteReader();
@@ -34,13 +34,13 @@ public abstract class SqlServerDatabase : IDatabase
         return (default(TOut1), default(TOut2));
     }
 
-    public TOut ExecuteSingleValue<TOut>(string statement, Dictionary<string, object> parameters)
+    public TOut ExecuteSingleValue<TOut>(string statement, in KeyValuePair<string, object>[] parameters)
     {
         SqlCommand cmd = PrepareQuery(statement, parameters);
         return (TOut)cmd.ExecuteScalar();
     }
 
-    private SqlCommand PrepareQuery(string statement, Dictionary<string, object> parameters)
+    private SqlCommand PrepareQuery(string statement, in KeyValuePair<string, object>[] parameters)
     {
         SqlCommand cmd = new(statement, _connection);
         foreach (var parameter in parameters)

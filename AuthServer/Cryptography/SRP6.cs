@@ -138,10 +138,10 @@ public class SRP6
         SHA1.HashData(bytes, m1);
         if (!m1.SequenceEqual(M1))
             return ReadOnlySpan<byte>.Empty;
-        _db.ExecuteNonQuery(_db.SetSessionKey, new()
+        _db.ExecuteNonQuery(_db.SetSessionKey, new KeyValuePair<string, object>[]
         {
-            { "@SessionKey", m2[52..].ToArray() },
-            { "@Name", username },
+            new ( "@SessionKey", m2[52..].ToArray() ),
+            new ( "@Name", username ),
         });
         A.CopyTo(m2);
         M1.CopyTo(m2[L..]);
