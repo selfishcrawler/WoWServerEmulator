@@ -140,8 +140,8 @@ public class SRP6
             return ReadOnlySpan<byte>.Empty;
         _db.ExecuteNonQuery(_db.SetSessionKey, new KeyValuePair<string, object>[]
         {
-            new ( "@SessionKey", m2[52..].ToArray() ),
-            new ( "@Name", username ),
+            new ("@SessionKey", m2[52..].ToArray()),
+            new ("@Name", username),
         });
         A.CopyTo(m2);
         M1.CopyTo(m2[L..]);

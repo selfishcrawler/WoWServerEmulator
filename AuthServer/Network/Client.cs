@@ -130,7 +130,7 @@ public class Client
 
         (var verifier, var salt) = _db.ExecuteSingleRaw<byte[], byte[]>(_db.GetUserAuthData, new KeyValuePair<string, object>[]
         {
-            new ( "@Name", _username ),
+            new ("@Name", _username),
         });
         if (verifier is default(byte[]))
         {
@@ -191,7 +191,7 @@ public class Client
 
         _sessionKey = _db.ExecuteSingleValue<byte[]>(_db.GetSessionKey, new KeyValuePair<string, object>[]
         {
-            new ( "@Name", _username )
+            new ("@Name", _username)
         });
 
         _smsg.Reset();

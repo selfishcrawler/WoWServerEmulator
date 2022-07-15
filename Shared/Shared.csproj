@@ -8,6 +8,8 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Data.SqlClient" Version="5.0.0-preview2.22096.2" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="7.0.0-preview.6.22324.4" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Ini" Version="7.0.0-preview.6.22324.4" />
   </ItemGroup>
 
 </Project>
