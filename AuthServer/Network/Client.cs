@@ -6,7 +6,7 @@ using System.Security.Cryptography;
 using AuthServer.AuthStructs;
 using AuthServer.Cryptography;
 using AuthServer.Enums;
-using AuthServer.Extensions;
+using Shared.Extensions;
 using Shared.Database;
 
 namespace AuthServer.Network;
@@ -31,8 +31,6 @@ public class Client
         _client = client;
         _stream = client.GetStream();
         _server = server;
-        _stream.WriteTimeout = (int)_server.WriteTimeout.TotalMilliseconds;
-        _stream.ReadTimeout = 1;
 
         _db = _server.LoginDatabase;
         _buffer = new byte[200];
@@ -53,8 +51,7 @@ public class Client
                 if (bytesRead == 0)
                 {
                     Log.Warning("Клиент разорвал соединение");
-                    _stream.Close();
-                    _client.Close();
+                    CloseConnection();
                     return;
                 }
                 AuthCommand cmd = (AuthCommand)_buffer[0];
@@ -80,8 +77,7 @@ public class Client
                         Log.Error($"Неизвестное исключение: {ex.Message}");
                         break;
                 }
-                _stream.Close();
-                _client.Close();
+                CloseConnection();
                 return;
             }
         }
@@ -95,7 +91,7 @@ public class Client
         AuthCommand.AUTH_RECONNECT_PROOF        => HandleReconnectProof,
 
         AuthCommand.REALMLIST                   => HandleRealmlist,
-        _ => null,
+        _                                       => CloseConnection,
     };
 
     private unsafe void HandleAuthLogonChallenge()
@@ -257,5 +253,11 @@ public class Client
         _server.RealmList.SendRealmListToNetworkStream(_stream, accountValues);
         _stream.Write(stackalloc byte[] { 0x10, 0x00 });
         _authed = true;
+    }
+
+    private void CloseConnection()
+    {
+        _stream.Close();
+        _client.Close();
     }
 }

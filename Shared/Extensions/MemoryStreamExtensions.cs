@@ -1,7 +1,7 @@
 ﻿using System.Runtime.CompilerServices;
-using AuthServer.Realms;
+using Shared.Network;
 
-namespace AuthServer.Extensions;
+namespace Shared.Extensions;
 
 public static class MemoryStreamExtensions
 {
@@ -25,8 +25,15 @@ public static class MemoryStreamExtensions
         ms.Write(BitConverter.GetBytes(data));
     }
 
+    public static void Write(this MemoryStream ms, ServerPacketHeader header)
+    {
+        ms.Write(header.LengthBigEndian);
+        ms.Write((ushort)header.Opcode);
+    }
+
     public static void Reset(this MemoryStream ms)
     {
         ms.Seek(0, SeekOrigin.Begin);
     }
+
 }

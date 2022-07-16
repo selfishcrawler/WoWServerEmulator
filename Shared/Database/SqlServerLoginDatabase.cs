@@ -1,6 +1,6 @@
 ﻿namespace Shared.Database;
 
-public class SqlServerLoginDatabase : SqlServerDatabase, ILoginDatabase
+public sealed class SqlServerLoginDatabase : SqlServerDatabase, ILoginDatabase
 {
     public SqlServerLoginDatabase(string connectionString, string dbName) : base(connectionString, dbName)
     {

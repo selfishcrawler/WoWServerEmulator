@@ -1,4 +1,4 @@
-﻿namespace AuthServer;
+﻿namespace Shared;
 
 public static class Log
 {

@@ -1,6 +1,6 @@
 ﻿using System.Net.Sockets;
 
-namespace AuthServer.Extensions;
+namespace Shared.Extensions;
 
 public static class NetworkStreamExtensions
 {

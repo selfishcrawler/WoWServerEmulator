@@ -5,7 +5,9 @@ VisualStudioVersion = 17.3.32611.2
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AuthServer", "AuthServer\AuthServer.csproj", "{55C1A54A-7F69-4193-886F-DACF5D234D46}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shared", "Shared\Shared.csproj", "{309DD188-5D60-4DA0-94D1-891FA488FB4F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shared", "Shared\Shared.csproj", "{309DD188-5D60-4DA0-94D1-891FA488FB4F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClusterServer", "ClusterServer\ClusterServer.csproj", "{52FA70EA-917E-4BB3-8CB5-2978565E9EBD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{309DD188-5D60-4DA0-94D1-891FA488FB4F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{309DD188-5D60-4DA0-94D1-891FA488FB4F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{309DD188-5D60-4DA0-94D1-891FA488FB4F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{52FA70EA-917E-4BB3-8CB5-2978565E9EBD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{52FA70EA-917E-4BB3-8CB5-2978565E9EBD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{52FA70EA-917E-4BB3-8CB5-2978565E9EBD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{52FA70EA-917E-4BB3-8CB5-2978565E9EBD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

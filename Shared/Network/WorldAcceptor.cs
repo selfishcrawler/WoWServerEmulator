@@ -1,14 +1,12 @@
-﻿using System.IO;
-using System.Net;
+﻿using System.Net;
 using System.Net.Sockets;
-using AuthServer.Realms;
 using Shared.Database;
 
-namespace AuthServer.Network;
+namespace Shared.Network;
 
-public class Server
+public class WorldAcceptor
 {
-    private const int DefaultAuthserverPort = 3724;
+    private const int DefaultWorldPort = 8085;
     private TcpListener _listener;
     private CancellationTokenSource _cts;
     public IPAddress IP { get; private set; }
@@ -23,12 +21,13 @@ public class Server
     {
         get => _cts is not null && !_cts.IsCancellationRequested;
     }
-    public RealmList RealmList { get; private set; }
+
+    private readonly List<WorldSession> _sessions;
     public ILoginDatabase LoginDatabase { get; init; }
 
-    public Server(string ip, int port = DefaultAuthserverPort) : this(IPAddress.TryParse(ip, out IPAddress _ip) ? _ip : null, port) { }
+    public WorldAcceptor(string ip, int port = DefaultWorldPort) : this(IPAddress.TryParse(ip, out IPAddress _ip) ? _ip : null, port) { }
 
-    public Server(IPAddress ip, int port = DefaultAuthserverPort)
+    public WorldAcceptor(IPAddress ip, int port = DefaultWorldPort)
     {
         ArgumentNullException.ThrowIfNull(ip, nameof(ip));
         if (port < 0 || port > ushort.MaxValue)
@@ -37,7 +36,7 @@ public class Server
         IP = ip;
         Port = port;
         _listener = new TcpListener(IP, Port);
-        RealmList = new();
+        _sessions = new List<WorldSession>(100);
     }
 
     public async Task Start()
@@ -63,10 +62,16 @@ public class Server
         {
             var tcpClient = await _listener.AcceptTcpClientAsync(_cts.Token);
             tcpClient.SendTimeout = (int)WriteTimeout.TotalMilliseconds;
-            tcpClient.ReceiveTimeout = 1;
-            var client = new Client(tcpClient, this);
-            _ = client.HandleConnection();
+            tcpClient.ReceiveTimeout = 3;
+            var client = new WorldSession(tcpClient, this);
+            _sessions.Add(client);
+            _ = client.InitConnection();
         }
+    }
+
+    public void RemoveSession(WorldSession session)
+    {
+        _sessions.Remove(session);
     }
 
     public void Stop()
