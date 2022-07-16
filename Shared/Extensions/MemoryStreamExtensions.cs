@@ -25,7 +25,7 @@ public static class MemoryStreamExtensions
         ms.Write(BitConverter.GetBytes(data));
     }
 
-    public static void Write(this MemoryStream ms, ServerPacketHeader header)
+    public static void Write(this MemoryStream ms, in ServerPacketHeader header)
     {
         ms.Write(header.LengthBigEndian);
         ms.Write((ushort)header.Opcode);

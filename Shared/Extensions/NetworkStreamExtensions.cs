@@ -12,5 +12,6 @@ public static class NetworkStreamExtensions
     public static void PushPacket(this NetworkStream ns, MemoryStream ms)
     {
         ns.Write(ms.GetBuffer(), 0, (int)ms.Position);
+        ms.Reset();
     }
 }

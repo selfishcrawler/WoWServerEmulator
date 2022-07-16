@@ -120,7 +120,6 @@ public class Client
         _username = Marshal.PtrToStringAnsi((IntPtr)pkt.AccountName);
         Console.WriteLine($"Account name: {_username}");
 
-        _smsg.Reset();
         _smsg.Write(AuthCommand.AUTH_LOGON_CHALLENGE);
         _smsg.Write(0);
 
@@ -159,7 +158,6 @@ public class Client
 
         ReadOnlySpan<byte> A = new(pkt.A, 32);
         ReadOnlySpan<byte> M1 = new(pkt.M1, 20);
-        _smsg.Reset();
         _smsg.Write(AuthCommand.AUTH_LOGON_PROOF);
         var m2 = _srp.GetM2(A, M1, _username);
         if (m2.IsEmpty)
@@ -190,7 +188,6 @@ public class Client
             new ("@Name", _username)
         });
 
-        _smsg.Reset();
         _smsg.Write(AuthCommand.AUTH_RECONNECT_CHALLENGE);
         if (_sessionKey is default(byte[]))
         {
@@ -231,7 +228,6 @@ public class Client
             _client.Close();
             return;
         }
-        _smsg.Reset();
         _smsg.Write(AuthCommand.AUTH_RECONNECT_PROOF);
         _smsg.Write(AuthResult.WOW_SUCCESS);
         _smsg.Write((ushort)0);

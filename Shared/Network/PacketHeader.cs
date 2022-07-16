@@ -11,8 +11,9 @@ public ref struct ServerPacketHeader
     public ushort LengthBigEndian
     {
         get => _length;
+        set => _length = value;
     }
-    public Opcode Opcode { get; init; }
+    public Opcode Opcode { get; set; }
 
     public ServerPacketHeader(ushort length, Opcode opcode)
     {
@@ -24,19 +25,19 @@ public ref struct ServerPacketHeader
 
 public ref struct ClientPacketHeader
 {
-    uint _length;
-    public uint LengthBigEndian
+    ushort _length;
+    public ushort LengthBigEndian
     {
         get => (ushort)((_length >> 8) + (_length << 8));
         set => _length = (ushort)((_length >> 8) + (_length << 8));
     }
-    public uint Length
+    public ushort Length
     {
         get => _length;
     }
-    public Opcode Opcode { get; init; }
+    public Opcode Opcode { get; set; }
 
-    public ClientPacketHeader(uint length, Opcode opcode)
+    public ClientPacketHeader(ushort length, Opcode opcode)
     {
         Opcode = opcode;
         _length = (ushort)((length >> 8) + (length << 8));
