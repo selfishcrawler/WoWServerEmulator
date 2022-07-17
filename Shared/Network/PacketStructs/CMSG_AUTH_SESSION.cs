@@ -16,5 +16,6 @@ public unsafe ref struct CMSG_AUTH_SESSION
     public uint BattlegroupID;
     public uint RealmID;
     public ulong DOS;
+    public fixed byte Proof[20];
     public byte* AddonData;
 }

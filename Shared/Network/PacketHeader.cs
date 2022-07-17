@@ -26,11 +26,6 @@ public ref struct ServerPacketHeader
 public ref struct ClientPacketHeader
 {
     ushort _length;
-    public ushort LengthBigEndian
-    {
-        get => (ushort)((_length >> 8) + (_length << 8));
-        set => _length = (ushort)((_length >> 8) + (_length << 8));
-    }
     public ushort Length
     {
         get => _length;

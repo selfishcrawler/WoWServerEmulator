@@ -237,8 +237,6 @@ public class Client
     private void HandleRealmlist()
     {
         _stream.Read(_buffer, 0, 4);
-        if (_authed)
-            return;
 
         var accountValues = new Dictionary<int, (bool, byte)>()
         {
