@@ -10,6 +10,7 @@ public abstract class BaseEntity
     protected readonly uint _guid;
     protected readonly byte[] _packedGuid;
     protected readonly byte _maskSize;
+    protected readonly uint _entry;
 
     public uint Guid
     {
@@ -42,6 +43,15 @@ public abstract class BaseEntity
     public ReadOnlySpan<byte> PackedGuid => _packedGuid.AsSpan();
     public ReadOnlySpan<byte> LowGuid => BitConverter.GetBytes(_guid);
     public abstract ReadOnlySpan<byte> HighGuid { get; }
+    public virtual uint Entry
+    {
+        get => _entry;
+        init
+        {
+            _entry = value;
+            SetField(EObjectFields.OBJECT_FIELD_ENTRY, value);
+        }
+    }
 
     protected BaseEntity(uint guid, int bitCount)
     {

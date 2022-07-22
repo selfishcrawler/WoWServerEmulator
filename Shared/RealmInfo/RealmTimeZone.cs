@@ -1,4 +1,4 @@
-﻿namespace AuthServer.Enums;
+﻿namespace Shared.RealmInfo;
 
 public enum RealmTimeZone : byte
 {

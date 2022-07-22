@@ -4,7 +4,7 @@ using static EUnitFields;
 public abstract class Unit : BaseEntity
 {
     protected float _x, _y, _z, _o;
-    protected uint _currentHealth, _maxHealth, _level;
+    protected uint _currentHealth, _maxHealth, _level, _displayID, _nativeDisplayID;
     
     public uint CurrentHealth
     {
@@ -33,6 +33,26 @@ public abstract class Unit : BaseEntity
         {
             _level = value;
             SetField(UNIT_FIELD_LEVEL, value);
+        }
+    }
+
+    public uint DisplayID
+    {
+        get => _displayID;
+        set
+        {
+            _displayID = value;
+            SetField(UNIT_FIELD_DISPLAYID, value);
+        }
+    }
+
+    public uint NativeDisplayID
+    {
+        get => _nativeDisplayID;
+        set
+        {
+            _nativeDisplayID = value;
+            SetField(UNIT_FIELD_NATIVEDISPLAYID, value);
         }
     }
 

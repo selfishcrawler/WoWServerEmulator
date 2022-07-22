@@ -1,5 +1,5 @@
 ﻿using System.Text;
-using AuthServer.Enums;
+using Shared.RealmInfo;
 
 namespace AuthServer.Realms;
 

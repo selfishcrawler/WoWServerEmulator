@@ -1,15 +1,20 @@
 ﻿using System.Net.Sockets;
 using AuthServer.Enums;
+using Shared.Database;
+using Shared.RealmInfo;
 
 namespace AuthServer.Realms;
 
 public class RealmList
 {
     private readonly Dictionary<int, Realm> _realms;
+    private readonly ILoginDatabase _loginDatabase;
 
-    public RealmList()
+    public RealmList(ILoginDatabase database)
     {
         _realms = new Dictionary<int, Realm>();
+        _loginDatabase = database;
+        UpdateRealmList();
     }
 
     public Realm this[int index]
@@ -27,6 +32,27 @@ public class RealmList
     public void Remove(int ID)
     {
         _realms.Remove(ID);
+    }
+
+    public void UpdateRealmList()
+    {
+        foreach (var realmObject in _loginDatabase.ExecuteMultipleRaws(_loginDatabase.GetRealmList, null))
+        {
+            byte id = (byte)realmObject[0];
+            string name = (string)realmObject[1];
+            string address = $"{(string)realmObject[5]}:{(int)realmObject[6]}";
+            var realm = new Realm(id, name, address)
+            {
+                RealmType = (RealmType)realmObject[2],
+                Locked = (bool)realmObject[3],
+                Flags = (RealmFlags)realmObject[4],
+                Population = (float)realmObject[7],
+                TimeZone = (RealmTimeZone)realmObject[8],
+                Version = new byte[3], // maybe get version with build?
+                Build = (ushort)(int)realmObject[9]
+            };
+            Add(realm);
+        }
     }
 
     public void SendRealmListToNetworkStream(NetworkStream stream, Dictionary<int, (bool, byte)> accountValuesForRealm)
