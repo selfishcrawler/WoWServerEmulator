@@ -1,14 +1,14 @@
-﻿using System.Runtime.CompilerServices;
-using System.Text;
+﻿using System.Text;
 using Shared.Network;
 
 namespace Shared.Extensions;
 
 public static class MemoryStreamExtensions
 {
-    public static void Write<T>(this MemoryStream ms, T Data) where T : Enum
+    public static unsafe void Write<T>(this MemoryStream ms, T Data) where T : unmanaged, Enum
     {
-        ms.WriteByte(Unsafe.As<T, byte>(ref Data));
+        var bytes = new ReadOnlySpan<byte>(&Data, sizeof(T));
+        ms.Write(bytes);
     }
 
     public static void Write(this MemoryStream ms, byte data)

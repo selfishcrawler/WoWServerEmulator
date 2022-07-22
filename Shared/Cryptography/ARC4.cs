@@ -10,7 +10,8 @@ public class ARC4
 
     private readonly byte[] _encryptionState;
     private readonly byte[] _decryptionState;
-    private int encrX, encrY, decrX, decrY;
+    private byte encrX, encrY, decrX, decrY;
+    private readonly object _encryptLock, _decryptLock;
 
     public ARC4(ReadOnlySpan<byte> sessionKey)
     {
@@ -23,23 +24,25 @@ public class ARC4
 
         HMACSHA1.HashData(decryptionKey, sessionKey, hash);
         Init(hash, _decryptionState);
+
+        _encryptLock = new object();
+        _decryptLock = new object();
         Span<byte> drop = stackalloc byte[1024];
-        var kek = new byte[1024];
         Encrypt(drop);
         Decrypt(drop);
     }
 
     private static void Init(ReadOnlySpan<byte> key, Span<byte> state)
     {
-        int index1 = 0, index2 = 0;
+        byte index1 = 0, index2 = 0;
         for (int i = 0; i <= byte.MaxValue; i++)
             state[i] = (byte)i;
 
         for (int i = 0; i < 256; i++)
         {
-            index2 = (key[index1] + state[i] + index2) % 256;
+            index2 = unchecked(((byte)(key[index1] + state[i] + index2)));
             (state[i], state[index2]) = (state[index2], state[i]);
-            index1 = (index1 + 1) % key.Length;
+            index1 = (byte)((index1 + 1) % key.Length);
         }
     }
 
@@ -50,15 +53,18 @@ public class ARC4
 
     private void Encrypt(Span<byte> data)
     {
-        for (int i = 0; i < data.Length; i++)
+        unchecked
         {
-            encrX = (encrX + 1) % 256;
-            encrY = (encrY + _encryptionState[encrX]) % 256;
+            for (int i = 0; i < data.Length; i++)
+            {
+                encrX = (byte)(encrX + 1);
+                encrY = (byte)(encrY + _encryptionState[encrX]);
 
-            SwapBytes(_encryptionState, encrX, encrY);
+                SwapBytes(_encryptionState, encrX, encrY);
 
-            var xorIndex = (_encryptionState[encrX] + _encryptionState[encrY]) % 256;
-            data[i] ^= _encryptionState[xorIndex];
+                byte xorIndex = (byte)(_encryptionState[encrX] + _encryptionState[encrY]);
+                data[i] ^= _encryptionState[xorIndex];
+            }
         }
     }
 
@@ -67,23 +73,31 @@ public class ARC4
         Span<byte> data = stackalloc byte[4];
         BitConverter.GetBytes(header.LengthBigEndian).CopyTo(data);
         BitConverter.GetBytes((ushort)header.Opcode).CopyTo(data[2..]);
-        Encrypt(data);
+        lock (_encryptLock)
+        {
+            Encrypt(data);
+        }
         header.LengthBigEndian = BitConverter.ToUInt16(data);
         header.Opcode = (Opcode)BitConverter.ToUInt16(data[2..]);
     }
 
     public ClientPacketHeader Decrypt(Span<byte> data)
     {
-        var copy = data.ToArray();
-        for (int i = 0; i < data.Length; i++)
+        lock (_decryptLock)
         {
-            decrX = (decrX + 1) % 256;
-            decrY = (decrY + _decryptionState[decrX]) % 256;
+            unchecked
+            {
+                for (int i = 0; i < data.Length; i++)
+                {
+                    decrX = (byte)(decrX + 1);
+                    decrY = (byte)(decrY + _decryptionState[decrX]);
 
-            SwapBytes(_decryptionState, decrX, decrY);
+                    SwapBytes(_decryptionState, decrX, decrY);
 
-            var xorIndex = (_decryptionState[decrX] + _decryptionState[decrY]) % 256;
-            data[i] ^= _decryptionState[xorIndex];
+                    byte xorIndex = (byte)(_decryptionState[decrX] + _decryptionState[decrY]);
+                    data[i] ^= _decryptionState[xorIndex];
+                }
+            }
         }
         var header = new ClientPacketHeader(BitConverter.ToUInt16(data), (Opcode)BitConverter.ToUInt32(data[2..]));
         return header;

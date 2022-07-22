@@ -6,7 +6,7 @@ public abstract class SqlServerDatabase : IDatabase
 {
     private readonly SqlConnection _connection;
 
-    public SqlServerDatabase(string connectionString, string dbName)
+    protected SqlServerDatabase(string connectionString, string dbName)
     {
         _connection = new SqlConnection(connectionString);
         _connection.Open();

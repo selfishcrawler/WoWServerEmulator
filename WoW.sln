@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AuthServer", "AuthServer\Au
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shared", "Shared\Shared.csproj", "{309DD188-5D60-4DA0-94D1-891FA488FB4F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClusterServer", "ClusterServer\ClusterServer.csproj", "{52FA70EA-917E-4BB3-8CB5-2978565E9EBD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ClusterServer", "ClusterServer\ClusterServer.csproj", "{52FA70EA-917E-4BB3-8CB5-2978565E9EBD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

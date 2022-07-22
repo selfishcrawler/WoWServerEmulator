@@ -1,6 +1,6 @@
 ﻿namespace AuthServer.Enums;
 
-public enum AuthResult
+public enum AuthResult : byte
 {
     WOW_SUCCESS                                 = 0x00,
     WOW_FAIL_BANNED                             = 0x03,

@@ -1,6 +1,6 @@
 ﻿namespace AuthServer.Enums;
 
-public enum AuthCommand
+public enum AuthCommand : byte
 {
     AUTH_LOGON_CHALLENGE        = 0x00,
     AUTH_LOGON_PROOF            = 0x01,

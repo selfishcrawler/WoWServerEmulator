@@ -36,21 +36,7 @@ class Program
                 Build = 12340,
             };
 
-
-            var realm2 = new Realms.Realm(2, "Четкий реалм", "127.0.0.1:8086")
-            {
-                RealmType = RealmType.NORMAL,
-                Locked = false,
-                Flags = RealmFlags.NONE,
-                Population = 400,
-                TimeZone = RealmTimeZone.Russian,
-                ID = 2,
-                Version = new byte[] { 3, 3, 5 },
-                Build = 12340,
-            };
-
             s.RealmList.Add(realm1);
-            s.RealmList.Add(realm2);
             _ = s.Start();
         }
         catch (Exception ex)
