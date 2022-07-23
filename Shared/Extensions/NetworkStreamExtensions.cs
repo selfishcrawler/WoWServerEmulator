@@ -1,5 +1,4 @@
-﻿using Shared.Network;
-using System.Net.Sockets;
+﻿using System.Net.Sockets;
 
 namespace Shared.Extensions;
 
@@ -14,10 +13,5 @@ public static class NetworkStreamExtensions
     {
         ns.Write(ms.GetBuffer(), 0, (int)ms.Position);
         ms.Reset();
-    }
-    public static void Write(this NetworkStream ns, in ServerPacketHeader header)
-    {
-        ns.Write(BitConverter.GetBytes(header.LengthBigEndian));
-        ns.Write(BitConverter.GetBytes((ushort)header.Opcode));
     }
 }

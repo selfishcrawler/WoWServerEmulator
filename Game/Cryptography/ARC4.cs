@@ -1,7 +1,7 @@
 ﻿using System.Security.Cryptography;
-using Shared.Network;
+using Game.Network;
 
-namespace Shared.Cryptography;
+namespace Game.Cryptography;
 
 public class ARC4
 {

@@ -1,4 +1,5 @@
-﻿namespace Shared.Network;
+﻿namespace Game.Network;
+using static Opcode;
 
 public enum Opcode : uint
 {
@@ -97,4 +98,56 @@ public enum Opcode : uint
     SMSG_REDIRECT_CLIENT                        = 0x50D,
     CMSG_REDIRECTION_FAILED                     = 0x50E,
     CMSG_REDIRECTION_AUTH_PROOF                 = 0x512,
+}
+
+public partial class WorldSession
+{
+    private PacketHandler GetHandlerForPacket(ClientPacketHeader header) => header.Opcode switch
+    {
+        CMSG_CHAR_CREATE => HandleCharCreate,
+        CMSG_CHAR_ENUM => HandleCharEnum,
+        CMSG_PLAYER_LOGIN => HandlePlayerLogin,
+        CMSG_LOGOUT_REQUEST => HandleLogoutRequest,
+        CMSG_NAME_QUERY => HandleNameQuery,
+
+        MSG_MOVE_START_FORWARD => HandleMovementPacket,
+        MSG_MOVE_START_BACKWARD => HandleMovementPacket,
+        MSG_MOVE_STOP => HandleMovementPacket,
+        MSG_MOVE_START_STRAFE_LEFT => HandleMovementPacket,
+        MSG_MOVE_START_STRAFE_RIGHT => HandleMovementPacket,
+        MSG_MOVE_STOP_STRAFE => HandleMovementPacket,
+        MSG_MOVE_JUMP => HandleMovementPacket,
+        MSG_MOVE_START_TURN_LEFT => HandleMovementPacket,
+        MSG_MOVE_START_TURN_RIGHT => HandleMovementPacket,
+        MSG_MOVE_STOP_TURN => HandleMovementPacket,
+        MSG_MOVE_START_PITCH_UP => HandleMovementPacket,
+        MSG_MOVE_START_PITCH_DOWN => HandleMovementPacket,
+        MSG_MOVE_STOP_PITCH => HandleMovementPacket,
+        MSG_MOVE_SET_RUN_MODE => HandleMovementPacket,
+        MSG_MOVE_SET_WALK_MODE => HandleMovementPacket,
+        MSG_MOVE_TOGGLE_LOGGING => HandleMovementPacket,
+        MSG_MOVE_TELEPORT => HandleMovementPacket,
+        MSG_MOVE_TELEPORT_ACK => HandleMovementPacket,
+        MSG_MOVE_TOGGLE_FALL_LOGGING => HandleMovementPacket,
+        MSG_MOVE_FALL_LAND => HandleMovementPacket,
+        MSG_MOVE_START_SWIM => HandleMovementPacket,
+        MSG_MOVE_STOP_SWIM => HandleMovementPacket,
+        MSG_MOVE_SET_RUN_SPEED => HandleMovementPacket,
+        MSG_MOVE_SET_RUN_BACK_SPEED => HandleMovementPacket,
+        MSG_MOVE_SET_WALK_SPEED => HandleMovementPacket,
+        MSG_MOVE_SET_SWIM_SPEED => HandleMovementPacket,
+        MSG_MOVE_SET_SWIM_BACK_SPEED => HandleMovementPacket,
+        MSG_MOVE_SET_TURN_RATE => HandleMovementPacket,
+        MSG_MOVE_SET_FACING => HandleMovementPacket,
+        MSG_MOVE_SET_PITCH => HandleMovementPacket,
+        MSG_MOVE_WORLDPORT_ACK => HandleMovementPacket,
+
+        CMSG_PING => HandlePing,
+        CMSG_SET_ACTIVE_MOVER => HandleSetActiveMover,
+        CMSG_REALM_SPLIT => HandleRealmSplit,
+        CMSG_TIME_SYNC_RESP => HandleTimeSyncResponce,
+        CMSG_SET_PLAYER_DECLINED_NAMES => HandleSetPlayerDeclinedNames,
+        CMSG_READY_FOR_ACCOUNT_DATA_TIMES => HandleReadyForAccountDataTimes,
+        _ => UnhandledPacket,
+    };
 }

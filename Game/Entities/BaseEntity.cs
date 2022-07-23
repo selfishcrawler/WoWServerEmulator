@@ -1,16 +1,19 @@
 ﻿using Shared.Extensions;
 using System.Collections;
 
-namespace Shared.Entities;
+namespace Game.Entities;
+using static EObjectFields;
 
 public abstract class BaseEntity
 {
     protected readonly BitArray _mask;
     protected readonly SortedDictionary<int, uint> _updateTable;
-    protected readonly uint _guid;
+    protected readonly uint _guid, _entry;
     protected readonly byte[] _packedGuid;
     protected readonly byte _maskSize;
-    protected readonly uint _entry;
+    protected float _scale;
+    protected abstract ObjectType ObjectType { get; }
+    protected abstract TypeMask TypeMask { get; }
 
     public uint Guid
     {
@@ -49,7 +52,16 @@ public abstract class BaseEntity
         init
         {
             _entry = value;
-            SetField(EObjectFields.OBJECT_FIELD_ENTRY, value);
+            SetField(OBJECT_FIELD_ENTRY, value);
+        }
+    }
+    public float Scale
+    {
+        get => _scale;
+        set
+        {
+            _scale = value;
+            SetField(OBJECT_FIELD_SCALE_X, value);
         }
     }
 
@@ -60,8 +72,10 @@ public abstract class BaseEntity
         _updateTable = new SortedDictionary<int, uint>();
         _maskSize = (byte)((bitCount + 31) / 32);
 
-        SetField(EObjectFields.OBJECT_FIELD_GUID, BitConverter.ToUInt32(LowGuid));
-        SetField(EObjectFields.OBJECT_FIELD_GUID + 1, BitConverter.ToUInt32(HighGuid));
+        SetField(OBJECT_FIELD_GUID, BitConverter.ToUInt32(LowGuid));
+        SetField(OBJECT_FIELD_GUID + 1, BitConverter.ToUInt32(HighGuid));
+        SetField(OBJECT_FIELD_TYPE, TypeMask);
+        Scale = 1.0f;
     }
 
     protected void SetField<TIndex>(TIndex index, uint value) where TIndex : Enum
@@ -97,5 +111,12 @@ public abstract class BaseEntity
 
         _mask.SetAll(false);
         _updateTable.Clear();
+    }
+
+    protected virtual void BuildUpdatePacket(ObjectUpdateType updateType, MemoryStream ms)
+    {
+        ms.Write(updateType);
+        ms.Write(_packedGuid);
+        ms.Write(ObjectType);
     }
 }

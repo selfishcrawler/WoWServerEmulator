@@ -33,7 +33,7 @@ public abstract class SqlServerDatabase : IDatabase
         return (default(TOut1), default(TOut2));
     }
 
-    public IEnumerable<object[]> ExecuteMultipleRaws(string statement, in KeyValuePair<string, object>[] parameters)
+    public List<object[]> ExecuteMultipleRaws(string statement, in KeyValuePair<string, object>[] parameters)
     {
         using var connection = new SqlConnection(_connectionString);
         SqlCommand cmd = PrepareQuery(statement, connection, parameters);

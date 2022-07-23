@@ -1,5 +1,4 @@
 ﻿using System.Text;
-using Shared.Network;
 
 namespace Shared.Extensions;
 
@@ -36,10 +35,9 @@ public static class MemoryStreamExtensions
         ms.Write(BitConverter.GetBytes(data));
     }
 
-    public static void Write(this MemoryStream ms, in ServerPacketHeader header)
+    public static void Write(this MemoryStream ms, bool data)
     {
-        ms.Write(header.LengthBigEndian);
-        ms.Write((ushort)header.Opcode);
+        ms.WriteByte((byte)(data ? 1 : 0));
     }
 
     public static void Write(this MemoryStream ms, string data, bool terminated = true)

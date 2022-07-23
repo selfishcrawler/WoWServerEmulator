@@ -1,4 +1,4 @@
-﻿namespace Shared.Entities;
+﻿namespace Game.Entities;
 using static EObjectFields;
 using static EItemFields;
 

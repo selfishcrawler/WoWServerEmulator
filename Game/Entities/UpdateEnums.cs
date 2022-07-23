@@ -1,4 +1,4 @@
-﻿namespace Shared.Entities;
+﻿namespace Game.Entities;
 
 public enum ObjectUpdateType : byte
 {

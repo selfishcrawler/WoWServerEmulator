@@ -4,25 +4,23 @@ using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Text;
 
-using Shared.Cryptography;
 using Shared.Database;
-using Shared.Entities;
-using Shared.Extensions;
-using Shared.Network.PacketStructs;
+using Game.Cryptography;
+using Game.Entities;
+using Game.Network.PacketStructs;
+using Game.World;
 
-namespace Shared.Network;
+namespace Game.Network;
 
 using static Opcode;
 
-public class WorldSession
+public partial class WorldSession
 {
     private delegate void PacketHandler(ClientPacketHeader header);
 
     private const int DefaultBufferSize = 1000;
     private const int ClientHeaderSize = 6;
-    private readonly CancellationToken _serverCancellationToken;
     private CancellationTokenSource _cts;
-    private readonly WorldAcceptor _acceptor;
     private readonly ILoginDatabase _loginDatabase;
 
     private readonly TcpClient _client;
@@ -33,27 +31,27 @@ public class WorldSession
 
     private readonly byte[] _seed;
     private byte[] _sessionKey;
+    private int _accountId;
     private string _username;
     private uint _timeSyncSequenceIndex;
     private Timer _logoutTimer;
+    public Player ActiveCharacter { get; private set; }
 
-    public WorldSession(TcpClient client, WorldAcceptor acceptor)
+    public WorldSession(TcpClient client)
     {
         _client = client;
         _stream = client.GetStream();
         _smsg = new MemoryStream(DefaultBufferSize);
         _cmsg = new byte[DefaultBufferSize];
         _seed = RandomNumberGenerator.GetBytes(4);
-        _acceptor = acceptor;
-        _serverCancellationToken = acceptor.CancellationToken;
-        _loginDatabase = acceptor.LoginDatabase;
+        _loginDatabase = WorldManager.LoginDatabase;
         _timeSyncSequenceIndex = 0;
     }
 
-    public async Task InitConnection()
+    public async Task InitConnection(CancellationToken serverToken)
     {
         SendAuthChallenge();
-        _cts = CancellationTokenSource.CreateLinkedTokenSource(_serverCancellationToken);
+        _cts = CancellationTokenSource.CreateLinkedTokenSource(serverToken);
         int bytesRead = await _stream.ReadAsync(_cmsg, 0, ClientHeaderSize, _cts.Token);
         if (bytesRead == 0)
             Disconnect();
@@ -103,55 +101,6 @@ public class WorldSession
         }
     }
 
-    private PacketHandler GetHandlerForPacket(ClientPacketHeader header) => header.Opcode switch
-    {
-        CMSG_CHAR_CREATE                            => HandleCharCreate,
-        CMSG_CHAR_ENUM                              => HandleCharEnum,
-        CMSG_PLAYER_LOGIN                           => HandlePlayerLogin,
-        CMSG_LOGOUT_REQUEST                         => HandleLogoutRequest,
-        CMSG_NAME_QUERY                             => HandleNameQuery,
-
-        MSG_MOVE_START_FORWARD                      => HandleMovementPacket,
-        MSG_MOVE_START_BACKWARD                     => HandleMovementPacket,
-        MSG_MOVE_STOP                               => HandleMovementPacket,
-        MSG_MOVE_START_STRAFE_LEFT                  => HandleMovementPacket,
-        MSG_MOVE_START_STRAFE_RIGHT                 => HandleMovementPacket,
-        MSG_MOVE_STOP_STRAFE                        => HandleMovementPacket,
-        MSG_MOVE_JUMP                               => HandleMovementPacket,
-        MSG_MOVE_START_TURN_LEFT                    => HandleMovementPacket,
-        MSG_MOVE_START_TURN_RIGHT                   => HandleMovementPacket,
-        MSG_MOVE_STOP_TURN                          => HandleMovementPacket,
-        MSG_MOVE_START_PITCH_UP                     => HandleMovementPacket,
-        MSG_MOVE_START_PITCH_DOWN                   => HandleMovementPacket,
-        MSG_MOVE_STOP_PITCH                         => HandleMovementPacket,
-        MSG_MOVE_SET_RUN_MODE                       => HandleMovementPacket,
-        MSG_MOVE_SET_WALK_MODE                      => HandleMovementPacket,
-        MSG_MOVE_TOGGLE_LOGGING                     => HandleMovementPacket,
-        MSG_MOVE_TELEPORT                           => HandleMovementPacket,
-        MSG_MOVE_TELEPORT_ACK                       => HandleMovementPacket,
-        MSG_MOVE_TOGGLE_FALL_LOGGING                => HandleMovementPacket,
-        MSG_MOVE_FALL_LAND                          => HandleMovementPacket,
-        MSG_MOVE_START_SWIM                         => HandleMovementPacket,
-        MSG_MOVE_STOP_SWIM                          => HandleMovementPacket,
-        MSG_MOVE_SET_RUN_SPEED                      => HandleMovementPacket,
-        MSG_MOVE_SET_RUN_BACK_SPEED                 => HandleMovementPacket,
-        MSG_MOVE_SET_WALK_SPEED                     => HandleMovementPacket,
-        MSG_MOVE_SET_SWIM_SPEED                     => HandleMovementPacket,
-        MSG_MOVE_SET_SWIM_BACK_SPEED                => HandleMovementPacket,
-        MSG_MOVE_SET_TURN_RATE                      => HandleMovementPacket,
-        MSG_MOVE_SET_FACING                         => HandleMovementPacket,
-        MSG_MOVE_SET_PITCH                          => HandleMovementPacket,
-        MSG_MOVE_WORLDPORT_ACK                      => HandleMovementPacket,
-
-        CMSG_PING                                   => HandlePing,
-        CMSG_SET_ACTIVE_MOVER                       => HandleSetActiveMover,
-        CMSG_REALM_SPLIT                            => HandleRealmSplit,
-        CMSG_TIME_SYNC_RESP                         => HandleTimeSyncResponce,
-        CMSG_SET_PLAYER_DECLINED_NAMES              => HandleSetPlayerDeclinedNames,
-        CMSG_READY_FOR_ACCOUNT_DATA_TIMES           => HandleReadyForAccountDataTimes,
-        _ => UnhandledPacket,
-    };
-
     private unsafe void HandleCharCreate(ClientPacketHeader _)
     {
         var header = new ServerPacketHeader(1, SMSG_CHAR_CREATE);
@@ -166,35 +115,48 @@ public class WorldSession
 
     private unsafe void HandleCharEnum(ClientPacketHeader _)
     {
-        _smsg.Write(1); //char count
-        _smsg.Write((ulong)1); // character guid
-        _smsg.Write("Тестчар");
-        _smsg.Write(1); // race
-        _smsg.Write(1); //class
-        _smsg.Write(1); //gender
-        _smsg.Write(8); //skin
-        _smsg.Write(2); //face
-        _smsg.Write(8); //hairstyle
-        _smsg.Write(5); //haircolor
-        _smsg.Write(6); //facialstyle
-        _smsg.Write(80); //level
-        _smsg.Write((uint)12); //zone
-        _smsg.Write((uint)0); //map
-        _smsg.Write(-8949.95F); //x
-        _smsg.Write(-132.493F); //y
-        _smsg.Write(83.5312F); //z
-        _smsg.Write((uint)0); //guild id
-        _smsg.Write((uint)0); // char flags
-        _smsg.Write((uint)0); // at login flags
-        _smsg.Write(0); //first login
-        _smsg.Write((uint)0); //pet display id
-        _smsg.Write((uint)0); //pet level
-        _smsg.Write((uint)0); //pet family
-        for (int i = 0; i < 23; i++) //gear info
+        var charList = _loginDatabase.ExecuteMultipleRaws(_loginDatabase.GetCharacterList, new KeyValuePair<string, object>[]
         {
-            _smsg.Write((uint)0);
-            _smsg.Write(0);
-            _smsg.Write((uint)0);
+            new("@Account", _accountId),
+            new("@Realm", 4),
+        });
+
+        _smsg.Write((byte)charList.Count);
+        foreach (var character in charList)
+        {
+            _smsg.Write((ulong)(int)character[0]);
+            _smsg.Write(character[1].ToString());
+            _smsg.Write((byte)character[2]);
+            _smsg.Write((byte)character[3]);
+            _smsg.Write((byte)character[4]);
+            _smsg.Write((byte)character[5]);
+            _smsg.Write((byte)character[6]);
+            _smsg.Write((byte)character[7]);
+            _smsg.Write((byte)character[8]);
+            _smsg.Write((byte)character[9]);
+            int level = (int)character[10];
+            _smsg.Write((byte)(level > 255 ? 255 : level));
+            _smsg.Write((uint)(int)character[11]);
+            _smsg.Write((uint)(int)character[12]);
+            _smsg.Write((float)character[13]);
+            _smsg.Write((float)character[14]);
+            _smsg.Write((float)character[15]);
+
+
+
+            _smsg.Write((uint)0); //guild id
+            _smsg.Write((uint)0x02000000); // char flags declined names set
+            _smsg.Write((uint)0); // at login flags 
+            _smsg.Write(0); //first login
+            _smsg.Write((uint)0); //pet display id
+            _smsg.Write((uint)0); //pet level
+            _smsg.Write((uint)0); //pet family
+            for (int i = 0; i < 23; i++) //gear info
+            {
+                _smsg.Write((uint)0);
+                _smsg.Write(0);
+                _smsg.Write((uint)0);
+            }
         }
         var header = new ServerPacketHeader((ushort)(_smsg.Position), SMSG_CHAR_ENUM);
         _encryptor.Encrypt(ref header);
@@ -211,6 +173,25 @@ public class WorldSession
         CMSG_PLAYER_LOGIN pkt;
         fixed (byte* ptr = &_cmsg[0])
             pkt = *(CMSG_PLAYER_LOGIN*)ptr;
+
+        ActiveCharacter = new Player((uint)pkt.Guid)
+        {
+            Alive = true,
+            CurrentHealth = 100,
+            MaxHealth = 200,
+            Level = 80,
+            Race = Race.Human,
+            Class = Class.Warrior,
+            Gender = Gender.Female,
+            PowerType = PowerType.Happiness,
+            DisplayID = 19724,
+            NativeDisplayID = 19724,
+
+            WalkSpeed = 4f,
+            RunSpeed = 20f,
+            BackwardsRunSpeed = 5f
+        };
+
         var header = new ServerPacketHeader(20, SMSG_LOGIN_VERIFY_WORLD);
         _encryptor.Encrypt(ref header);
         _smsg.Write((uint)0);
@@ -233,14 +214,12 @@ public class WorldSession
             _stream.Write(header);
             _stream.PushPacket(_smsg);
         }
+        ActiveCharacter.SetPosition(-8949.95F, -132.493F, 83.5312F, 0f);
+        ActiveCharacter.SetCurrentPower(PowerType.Happiness, 1000000);
+        ActiveCharacter.SetMaxPower(PowerType.Happiness, 2000000);
+        _smsg.Write((uint)1); // block count
+        ActiveCharacter.BuildUpdatePacket(_smsg);
 
-        var player = new Player(1)
-        {
-            CurrentHealth = 100,
-            MaxHealth = 200,
-            Level = 8000000,
-        };
-        player.BuildUpdatePacket(_smsg);
         header = new ServerPacketHeader((ushort)_smsg.Position, SMSG_UPDATE_OBJECT);
         _encryptor.Encrypt(ref header);
         lock (_stream)
@@ -277,7 +256,7 @@ public class WorldSession
         _encryptor.Encrypt(ref header);
         _smsg.Write(header);
         _smsg.Write((uint)0);
-        _smsg.Write((byte)(instantLogout ? 1 : 0)); //is instant bool
+        _smsg.Write(instantLogout);
         lock (_stream)
         {
             _stream.PushPacket(_smsg);
@@ -295,13 +274,14 @@ public class WorldSession
 
     private void HandleNameQuery(ClientPacketHeader _)
     {
-        _smsg.Write(new byte[] { 1, 1}); //packed guid
+        //TODO: read guid then responce
+        _smsg.Write(ActiveCharacter.PackedGuid); //packed guid
         _smsg.Write(0);
-        _smsg.Write("Тестчар");
+        _smsg.Write("Тестчарбд");
         _smsg.Write(0); // realm name
-        _smsg.Write(1);
-        _smsg.Write(1);
-        _smsg.Write(1);
+        _smsg.Write(ActiveCharacter.Race);
+        _smsg.Write(ActiveCharacter.Gender);
+        _smsg.Write(ActiveCharacter.Class);
         _smsg.Write(0);
 
         var header = new ServerPacketHeader((ushort)_smsg.Position, SMSG_NAME_QUERY_RESPONSE);
@@ -369,11 +349,12 @@ public class WorldSession
 
     private void HandleSetPlayerDeclinedNames(ClientPacketHeader _)
     {
+        //receive guid here
         var header = new ServerPacketHeader(12, SMSG_SET_PLAYER_DECLINED_NAMES_RESULT);
         _encryptor.Encrypt(ref header);
         _stream.Write(header);
         _smsg.Write((uint)0); //result code 0/1
-        _smsg.Write((ulong)1); //character guid
+        _smsg.Write((ulong)2); //character guid
         lock (_stream)
         {
             _stream.PushPacket(_smsg);
@@ -443,7 +424,7 @@ public class WorldSession
                     BitConverter.GetBytes(pkt.Seed).CopyTo(concat[(login.Length + 4)..]);
                     _seed.CopyTo(concat[(login.Length + 8)..]);
 
-                    _sessionKey = _loginDatabase.ExecuteSingleValue<byte[]>(_loginDatabase.GetSessionKey, new KeyValuePair<string, object>[]
+                    (_accountId, _sessionKey) = _loginDatabase.ExecuteSingleRaw<int, byte[]>(_loginDatabase.GetAccountInfoByUsername, new KeyValuePair<string, object>[]
                     {
                         new ("@Name", _username),
                     });
@@ -479,7 +460,7 @@ public class WorldSession
                 _username = Encoding.UTF8.GetString(_cmsg, 0, index - 1);
                 Span<byte> hash = _cmsg.AsSpan()[(index + 8)..(index+28)];
 
-                _sessionKey = _loginDatabase.ExecuteSingleValue<byte[]>(_loginDatabase.GetSessionKey, new KeyValuePair<string, object>[]
+                (_accountId,_sessionKey) = _loginDatabase.ExecuteSingleRaw<int, byte[]>(_loginDatabase.GetAccountInfoByUsername, new KeyValuePair<string, object>[]
                 {
                     new ("@Name", _username),
                 });
@@ -537,9 +518,9 @@ public class WorldSession
     public void Disconnect()
     {
         Log.Warning("Disconnecting");
-        _acceptor.RemoveSession(this);
         _cts.Cancel();
         _stream.Close();
         _client.Close();
+        _smsg.Dispose();
     }
 }

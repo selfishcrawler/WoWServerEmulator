@@ -2,7 +2,7 @@
 using System.Net.Sockets;
 using Shared.Database;
 
-namespace Shared.Network;
+namespace Game.Network;
 
 public class WorldAcceptor
 {
@@ -13,16 +13,11 @@ public class WorldAcceptor
     public int Port { get; private set; }
     public TimeSpan Timeout { get; set; }
     public TimeSpan WriteTimeout { get; set; }
-    public CancellationToken CancellationToken
-    {
-        get => _cts.Token;
-    }
     public bool Running
     {
         get => _cts is not null && !_cts.IsCancellationRequested;
     }
 
-    private readonly List<WorldSession> _sessions;
     public ILoginDatabase LoginDatabase { get; init; }
 
     public WorldAcceptor(string ip, int port = DefaultWorldPort) : this(IPAddress.TryParse(ip, out IPAddress _ip) ? _ip : null, port) { }
@@ -36,7 +31,6 @@ public class WorldAcceptor
         IP = ip;
         Port = port;
         _listener = new TcpListener(IP, Port);
-        _sessions = new List<WorldSession>(100);
     }
 
     public async Task Start()
@@ -63,15 +57,9 @@ public class WorldAcceptor
             var tcpClient = await _listener.AcceptTcpClientAsync(_cts.Token);
             tcpClient.SendTimeout = (int)WriteTimeout.TotalMilliseconds;
             tcpClient.ReceiveTimeout = 3;
-            var client = new WorldSession(tcpClient, this);
-            _sessions.Add(client);
-            _ = client.InitConnection();
+            var client = new WorldSession(tcpClient);
+            _ = client.InitConnection(_cts.Token);
         }
-    }
-
-    public void RemoveSession(WorldSession session)
-    {
-        _sessions.Remove(session);
     }
 
     public void Stop()

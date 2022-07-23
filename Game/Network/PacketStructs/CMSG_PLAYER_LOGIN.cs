@@ -1,6 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 
-namespace Shared.Network.PacketStructs;
+namespace Game.Network.PacketStructs;
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
 public unsafe ref struct CMSG_PLAYER_LOGIN

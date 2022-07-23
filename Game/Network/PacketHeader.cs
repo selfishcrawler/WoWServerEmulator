@@ -1,4 +1,4 @@
-﻿namespace Shared.Network;
+﻿namespace Game.Network;
 
 public ref struct ServerPacketHeader
 {

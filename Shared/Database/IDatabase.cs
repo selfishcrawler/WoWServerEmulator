@@ -9,5 +9,5 @@ public interface IDatabase
     public (TOut1, TOut2, TOut3, TOut4) ExecuteSingleRaw<TOut1, TOut2, TOut3, TOut4>(string statement, in KeyValuePair<string, object>[] parameters);
     public (TOut1, TOut2, TOut3, TOut4, TOut5) ExecuteSingleRaw<TOut1, TOut2, TOut3, TOut4, TOut5>(string statement, in KeyValuePair<string, object>[] parameters);
     public (TOut1, TOut2, TOut3, TOut4, TOut5, TOut6) ExecuteSingleRaw<TOut1, TOut2, TOut3, TOut4, TOut5, TOut6>(string statement, in KeyValuePair<string, object>[] parameters);
-    public IEnumerable<object[]> ExecuteMultipleRaws(string statement, in KeyValuePair<string, object>[] parameters);
+    public List<object[]> ExecuteMultipleRaws(string statement, in KeyValuePair<string, object>[] parameters);
 }
