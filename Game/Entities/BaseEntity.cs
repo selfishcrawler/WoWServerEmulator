@@ -109,8 +109,8 @@ public abstract class BaseEntity
         foreach (uint val in _updateTable.Values)
             ms.Write(val);
 
-        _mask.SetAll(false);
-        _updateTable.Clear();
+        //_mask.SetAll(false);
+        //_updateTable.Clear();
     }
 
     protected virtual void BuildUpdatePacket(ObjectUpdateType updateType, MemoryStream ms)

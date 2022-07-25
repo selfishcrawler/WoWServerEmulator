@@ -9,14 +9,17 @@ class Program
 {
     static int Main()
     {
+        //explicit init of all SRP6 values before everything
+        System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(SRP6).TypeHandle);
+
         Server s;
         var config = new ConfigurationBuilder().AddIniFile("AuthServer.cfg").Build();
+        ILoginDatabase loginDatabase;
         try
         {
-            //explicit init of all SRP6 values before everything
-            System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(SRP6).TypeHandle);
             string connString = config["DB:AuthConnectionString"];
-            s = new Server(new SqlServerLoginDatabase(connString), "0.0.0.0")
+            loginDatabase = new SqlServerLoginDatabase(connString);
+            s = new Server(loginDatabase, "0.0.0.0")
             {
                 Timeout = TimeSpan.FromSeconds(3),
                 WriteTimeout = TimeSpan.FromMilliseconds(10),
@@ -29,8 +32,9 @@ class Program
             Log.Error($"Ошибка при задании конфигурации сервера: {ex.Message}");
             return 1;
         }
-        Console.ReadKey();
-        s.Stop();
+
+        AuthServerCommandHandler commandHandler = new(s, loginDatabase);
+        commandHandler.Handle();
         return 0;
     }
 }

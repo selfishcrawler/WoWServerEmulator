@@ -1,5 +1,4 @@
-﻿using System.IO.Compression;
-using System.Net;
+﻿using System.Net;
 using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Text;
@@ -59,7 +58,7 @@ public partial class WorldSession
         await HandlePacketFlow();
     }
 
-    public void SendRedirect(uint nodeID)
+    private void SendRedirect(uint nodeID)
     {
         Span<byte> host = stackalloc byte[6];
         Span<byte> hash = stackalloc byte[20];
@@ -68,16 +67,10 @@ public partial class WorldSession
         BitConverter.GetBytes((ushort)8086).CopyTo(host[4..]);
         HMACSHA1.HashData(_sessionKey, host, hash);
 
-        var header = new ServerPacketHeader(30, SMSG_REDIRECT_CLIENT);
-        _encryptor.Encrypt(ref header);
         _smsg.Write(host);
         _smsg.Write((uint)0);
         _smsg.Write(hash);
-        lock (_stream)
-        {
-            _stream.Write(header);
-            _stream.PushPacket(_smsg);
-        }
+        SendPacket(SMSG_REDIRECT_CLIENT);
     }
 
     private async Task HandlePacketFlow()
@@ -103,14 +96,8 @@ public partial class WorldSession
 
     private unsafe void HandleCharCreate(ClientPacketHeader _)
     {
-        var header = new ServerPacketHeader(1, SMSG_CHAR_CREATE);
-        _encryptor.Encrypt(ref header);
-        _smsg.Write(header);
         _smsg.Write(47); //result
-        lock (_stream)
-        {
-            _stream.PushPacket(_smsg);
-        }
+        SendPacket(SMSG_CHAR_CREATE);
     }
 
     private unsafe void HandleCharEnum(ClientPacketHeader _)
@@ -118,10 +105,10 @@ public partial class WorldSession
         var charList = _loginDatabase.ExecuteMultipleRaws(_loginDatabase.GetCharacterList, new KeyValuePair<string, object>[]
         {
             new("@Account", _accountId),
-            new("@Realm", 4),
+            new("@Realm", WorldManager.RealmID),
         });
 
-        _smsg.Write((byte)charList.Count);
+        _smsg.Write((byte)charList.Count());
         foreach (var character in charList)
         {
             _smsg.Write((ulong)(int)character[0]);
@@ -158,13 +145,7 @@ public partial class WorldSession
                 _smsg.Write((uint)0);
             }
         }
-        var header = new ServerPacketHeader((ushort)(_smsg.Position), SMSG_CHAR_ENUM);
-        _encryptor.Encrypt(ref header);
-        lock (_stream)
-        {
-            _stream.Write(header);
-            _stream.PushPacket(_smsg);
-        }
+        SendPacket(SMSG_CHAR_ENUM);
     }
 
     private unsafe void HandlePlayerLogin(ClientPacketHeader _)
@@ -187,131 +168,96 @@ public partial class WorldSession
             DisplayID = 19724,
             NativeDisplayID = 19724,
 
-            WalkSpeed = 4f,
-            RunSpeed = 20f,
-            BackwardsRunSpeed = 5f
+            WalkSpeed = 1f,
+            RunSpeed = 3f,
+            BackwardsRunSpeed = 1f
         };
 
-        var header = new ServerPacketHeader(20, SMSG_LOGIN_VERIFY_WORLD);
-        _encryptor.Encrypt(ref header);
+        ActiveCharacter.SetPosition(-8949.95F, -132.493F, 83.5312F, 0f);
+        ActiveCharacter.SetCurrentPower(PowerType.Happiness, 1000000);
+        ActiveCharacter.SetMaxPower(PowerType.Happiness, 2000000);
+
+
         _smsg.Write((uint)0);
         _smsg.Write(-8949.95F);
         _smsg.Write(-132.493F);
         _smsg.Write(83.5312F);
         _smsg.Write(0.0F);
-        lock (_stream)
-        {
-            _stream.Write(header);
-            _stream.PushPacket(_smsg);
-        }
+        SendPacket(SMSG_LOGIN_VERIFY_WORLD);
 
-        header = new ServerPacketHeader(32, SMSG_TUTORIAL_FLAGS);
-        _encryptor.Encrypt(ref header);
         for (int i = 0; i < 8; i++)
             _smsg.Write((uint)0xFF);
-        lock (_stream)
-        {
-            _stream.Write(header);
-            _stream.PushPacket(_smsg);
-        }
-        ActiveCharacter.SetPosition(-8949.95F, -132.493F, 83.5312F, 0f);
-        ActiveCharacter.SetCurrentPower(PowerType.Happiness, 1000000);
-        ActiveCharacter.SetMaxPower(PowerType.Happiness, 2000000);
+        SendPacket(SMSG_TUTORIAL_FLAGS);
+
         _smsg.Write((uint)1); // block count
         ActiveCharacter.BuildUpdatePacket(_smsg);
 
-        header = new ServerPacketHeader((ushort)_smsg.Position, SMSG_UPDATE_OBJECT);
-        _encryptor.Encrypt(ref header);
-        lock (_stream)
-        {
-            _stream.Write(header);
-            _stream.PushPacket(_smsg);
-        }
+        SendPacket(SMSG_UPDATE_OBJECT);
 
-        header = new ServerPacketHeader(4, SMSG_TIME_SYNC_REQ);
-        _encryptor.Encrypt(ref header);
+        WorldManager.AddPlayerToWorld(this);
+
         _smsg.Write(_timeSyncSequenceIndex++);
+        SendPacket(SMSG_TIME_SYNC_REQ);
 
-        lock (_stream)
-        {
-            _stream.Write(header);
-            _stream.PushPacket(_smsg);
-        }
-
-        header = new ServerPacketHeader(2, SMSG_FEATURE_SYSTEM_STATUS);
-        _encryptor.Encrypt(ref header);
         _smsg.Write(2);
         _smsg.Write(0); //voice chat disable
-        lock (_stream)
-        {
-            _stream.Write(header);
-            _stream.PushPacket(_smsg);
-        }
+        SendPacket(SMSG_FEATURE_SYSTEM_STATUS);
     }
 
     private void HandleLogoutRequest(ClientPacketHeader _)
     {
         bool instantLogout = true;
-        var header = new ServerPacketHeader(5, SMSG_LOGOUT_RESPONSE);
-        _encryptor.Encrypt(ref header);
-        _smsg.Write(header);
         _smsg.Write((uint)0);
         _smsg.Write(instantLogout);
-        lock (_stream)
-        {
-            _stream.PushPacket(_smsg);
-        }
+        SendPacket(SMSG_LOGOUT_RESPONSE);
         _logoutTimer = new Timer((_) =>
         {
-            var header = new ServerPacketHeader(0, SMSG_LOGOUT_COMPLETE);
-            _encryptor.Encrypt(ref header);
-            lock (_stream)
-            {
-                _stream.Write(header);
-            }
+            SendPacket(SMSG_LOGOUT_COMPLETE);
         }, null, TimeSpan.FromSeconds(instantLogout ? 0 : 20), TimeSpan.Zero);
     }
 
     private void HandleNameQuery(ClientPacketHeader _)
     {
-        //TODO: read guid then responce
-        _smsg.Write(ActiveCharacter.PackedGuid); //packed guid
-        _smsg.Write(0);
-        _smsg.Write("Тестчарбд");
-        _smsg.Write(0); // realm name
-        _smsg.Write(ActiveCharacter.Race);
-        _smsg.Write(ActiveCharacter.Gender);
-        _smsg.Write(ActiveCharacter.Class);
-        _smsg.Write(0);
-
-        var header = new ServerPacketHeader((ushort)_smsg.Position, SMSG_NAME_QUERY_RESPONSE);
-        _encryptor.Encrypt(ref header);
-        lock (_stream)
+        ulong guid = BitConverter.ToUInt64(_cmsg);
+        if (guid == 3)
         {
-            _stream.Write(header);
-            _stream.PushPacket(_smsg);
+            //TODO: read guid then responce
+            _smsg.Write(new byte[] { 1, 3 }); //packed guid
+            _smsg.Write(0);
+            _smsg.Write("Тестчардва");
+            _smsg.Write(0); // realm name
+            _smsg.Write(ActiveCharacter.Race);
+            _smsg.Write(ActiveCharacter.Gender);
+            _smsg.Write(ActiveCharacter.Class);
+            _smsg.Write(0);
         }
+        else
+        {
+            //TODO: read guid then responce
+            _smsg.Write(ActiveCharacter.PackedGuid); //packed guid
+            _smsg.Write(0);
+            _smsg.Write("Тестчарбд");
+            _smsg.Write(0); // realm name
+            _smsg.Write(ActiveCharacter.Race);
+            _smsg.Write(ActiveCharacter.Gender);
+            _smsg.Write(ActiveCharacter.Class);
+            _smsg.Write(0);
+        }
+        SendPacket(SMSG_NAME_QUERY_RESPONSE);
     }
 
     private void HandleMovementPacket(ClientPacketHeader header)
     {
-
+        WorldManager.BroadcastMovementPacket(this, _cmsg.ToArray(), header.Opcode);
     }
 
     private unsafe void HandlePing(ClientPacketHeader _)
     {
         CMSG_PING pkt;
-        var header = new ServerPacketHeader(4, SMSG_PONG);
-        _encryptor.Encrypt(ref header);
-        _smsg.Write(header);
         fixed (byte* ptr = &_cmsg[0])
             pkt = *(CMSG_PING*)ptr;
         _smsg.Write(pkt.Ping);
-
-        lock (_stream)
-        {
-            _stream.PushPacket(_smsg);
-        }
+        SendPacket(SMSG_PONG);
     }
 
     private void HandleSetActiveMover(ClientPacketHeader _)
@@ -330,16 +276,10 @@ public partial class WorldSession
             pkt = *(CMSG_REALM_SPLIT*)ptr;
 
         byte[] split_date = Encoding.UTF8.GetBytes("01/01/01\0");
-        var header = new ServerPacketHeader((ushort)(8 + split_date.Length), SMSG_REALM_SPLIT);
-        _encryptor.Encrypt(ref header);
-        _smsg.Write(header);
         _smsg.Write(pkt.Unk);
         _smsg.Write(RealmNormal);
         _smsg.Write(split_date);
-        lock (_stream)
-        {
-            _stream.PushPacket(_smsg);
-        }
+        SendPacket(SMSG_REALM_SPLIT);
     }
 
     private void HandleTimeSyncResponce(ClientPacketHeader _)
@@ -349,23 +289,13 @@ public partial class WorldSession
 
     private void HandleSetPlayerDeclinedNames(ClientPacketHeader _)
     {
-        //receive guid here
-        var header = new ServerPacketHeader(12, SMSG_SET_PLAYER_DECLINED_NAMES_RESULT);
-        _encryptor.Encrypt(ref header);
-        _stream.Write(header);
         _smsg.Write((uint)0); //result code 0/1
         _smsg.Write((ulong)2); //character guid
-        lock (_stream)
-        {
-            _stream.PushPacket(_smsg);
-        }
+        SendPacket(SMSG_SET_PLAYER_DECLINED_NAMES_RESULT);
     }
 
     private void HandleReadyForAccountDataTimes(ClientPacketHeader header)
     {
-        var sheader = new ServerPacketHeader(4 + 1 + 4 + 8 * 4, SMSG_ACCOUNT_DATA_TIMES);
-        _encryptor.Encrypt(ref sheader);
-        _smsg.Write(sheader);
         var time = (uint)DateTimeOffset.Now.ToUnixTimeSeconds();
         _smsg.Write(time);
         _smsg.Write(1);
@@ -374,10 +304,7 @@ public partial class WorldSession
         {
             _smsg.Write((uint)0);
         }
-        lock (_stream)
-        {
-            _stream.PushPacket(_smsg);
-        }
+        SendPacket(SMSG_ACCOUNT_DATA_TIMES);
     }
 
     private void UnhandledPacket(ClientPacketHeader header)
@@ -483,6 +410,7 @@ public partial class WorldSession
 
                 break;
         }
+        WorldManager.AddSession(this);
     }
 
     private void SendAuthChallenge()
@@ -515,9 +443,36 @@ public partial class WorldSession
         }
     }
 
+    public void SendPacket(ReadOnlySpan<byte> packet, Opcode opcode)
+    {
+        lock(_stream)
+        {
+            var header = new ServerPacketHeader((ushort)packet.Length, opcode);
+            _encryptor.Encrypt(ref header);
+            _stream.Write(header);
+            _stream.Write(packet);
+        }
+    }
+    public void SendPacket(MemoryStream packet, Opcode opcode)
+    {
+        lock (_stream)
+        {
+            var header = new ServerPacketHeader((ushort)packet.Position, opcode);
+            _encryptor.Encrypt(ref header);
+            _stream.Write(header);
+            _stream.PushPacket(packet);
+        }
+    }
+
+    private void SendPacket(Opcode opcode)
+    {
+        SendPacket(_smsg, opcode);
+    }
+
     public void Disconnect()
     {
         Log.Warning("Disconnecting");
+        WorldManager.RemoveSession(this);
         _cts.Cancel();
         _stream.Close();
         _client.Close();

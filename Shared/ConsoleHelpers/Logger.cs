@@ -1,4 +1,4 @@
-﻿namespace Shared;
+﻿namespace Shared.ConsoleHelpers;
 
 public static class Log
 {

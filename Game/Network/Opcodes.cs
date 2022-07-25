@@ -63,6 +63,8 @@ public enum Opcode : uint
     MSG_MOVE_SET_PITCH                          = 0x0DB,
     MSG_MOVE_WORLDPORT_ACK                      = 0x0DC,
 
+    MSG_MOVE_HEARTBEAT                          = 0x0EE,
+
     SMSG_TUTORIAL_FLAGS                         = 0x0FD,
 
     CMSG_PING                                   = 0x1DC,
@@ -141,6 +143,8 @@ public partial class WorldSession
         MSG_MOVE_SET_FACING => HandleMovementPacket,
         MSG_MOVE_SET_PITCH => HandleMovementPacket,
         MSG_MOVE_WORLDPORT_ACK => HandleMovementPacket,
+
+        MSG_MOVE_HEARTBEAT => HandleMovementPacket,
 
         CMSG_PING => HandlePing,
         CMSG_SET_ACTIVE_MOVER => HandleSetActiveMover,

@@ -11,7 +11,6 @@ public class ARC4
     private readonly byte[] _encryptionState;
     private readonly byte[] _decryptionState;
     private byte encrX, encrY, decrX, decrY;
-    private readonly object _encryptLock, _decryptLock;
 
     public ARC4(ReadOnlySpan<byte> sessionKey)
     {
@@ -25,8 +24,6 @@ public class ARC4
         HMACSHA1.HashData(decryptionKey, sessionKey, hash);
         Init(hash, _decryptionState);
 
-        _encryptLock = new object();
-        _decryptLock = new object();
         Span<byte> drop = stackalloc byte[1024];
         Encrypt(drop);
         Decrypt(drop);
@@ -73,30 +70,24 @@ public class ARC4
         Span<byte> data = stackalloc byte[4];
         BitConverter.GetBytes(header.LengthBigEndian).CopyTo(data);
         BitConverter.GetBytes((ushort)header.Opcode).CopyTo(data[2..]);
-        lock (_encryptLock)
-        {
-            Encrypt(data);
-        }
+        Encrypt(data);
         header.LengthBigEndian = BitConverter.ToUInt16(data);
         header.Opcode = (Opcode)BitConverter.ToUInt16(data[2..]);
     }
 
     public ClientPacketHeader Decrypt(Span<byte> data)
     {
-        lock (_decryptLock)
+        unchecked
         {
-            unchecked
+            for (int i = 0; i < data.Length; i++)
             {
-                for (int i = 0; i < data.Length; i++)
-                {
-                    decrX = (byte)(decrX + 1);
-                    decrY = (byte)(decrY + _decryptionState[decrX]);
+                decrX = (byte)(decrX + 1);
+                decrY = (byte)(decrY + _decryptionState[decrX]);
 
-                    SwapBytes(_decryptionState, decrX, decrY);
+                SwapBytes(_decryptionState, decrX, decrY);
 
-                    byte xorIndex = (byte)(_decryptionState[decrX] + _decryptionState[decrY]);
-                    data[i] ^= _decryptionState[xorIndex];
-                }
+                byte xorIndex = (byte)(_decryptionState[decrX] + _decryptionState[decrY]);
+                data[i] ^= _decryptionState[xorIndex];
             }
         }
         var header = new ClientPacketHeader(BitConverter.ToUInt16(data), (Opcode)BitConverter.ToUInt32(data[2..]));

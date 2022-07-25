@@ -33,16 +33,11 @@ public abstract class SqlServerDatabase : IDatabase
         return (default(TOut1), default(TOut2));
     }
 
-    public List<object[]> ExecuteMultipleRaws(string statement, in KeyValuePair<string, object>[] parameters)
+    public IEnumerable<object[]> ExecuteMultipleRaws(string statement, KeyValuePair<string, object>[] parameters)
     {
         using var connection = new SqlConnection(_connectionString);
         SqlCommand cmd = PrepareQuery(statement, connection, parameters);
         var reader = cmd.ExecuteReader();
-        return IterateThroughResults(reader).ToList();
-    }
-
-    private IEnumerable<object[]> IterateThroughResults(SqlDataReader reader)
-    {
         if (!reader.HasRows)
             yield break;
         object[] result = new object[reader.FieldCount];

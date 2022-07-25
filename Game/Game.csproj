@@ -11,7 +11,7 @@
     <ProjectReference Include="..\Shared\Shared.csproj" />
   </ItemGroup>
 	<ItemGroup>
-		<Using Include="Shared" />
+		<Using Include="Shared.ConsoleHelpers" />
 		<Using Include="Shared.Extensions" />
 		<Using Include="Game.Extensions" />
 	</ItemGroup>
