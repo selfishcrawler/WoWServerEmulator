@@ -1,8 +1,12 @@
-﻿using Shared.Extensions;
-using System.Collections;
+﻿using System.Collections;
 
 namespace Game.Entities;
 using static EObjectFields;
+
+public struct Position
+{
+    public float X, Y, Z, Orientation;
+}
 
 public abstract class BaseEntity
 {
@@ -64,6 +68,7 @@ public abstract class BaseEntity
             SetField(OBJECT_FIELD_SCALE_X, value);
         }
     }
+    public Position Position { get; set; }
 
     protected BaseEntity(uint guid, int bitCount)
     {
@@ -76,6 +81,17 @@ public abstract class BaseEntity
         SetField(OBJECT_FIELD_GUID + 1, BitConverter.ToUInt32(HighGuid));
         SetField(OBJECT_FIELD_TYPE, TypeMask);
         Scale = 1.0f;
+    }
+
+    public void SetPosition(float x, float y, float z, float o)
+    {
+        Position = new Position()
+        {
+            X = x,
+            Y = y,
+            Z = z,
+            Orientation = o,
+        };
     }
 
     protected void SetField<TIndex>(TIndex index, uint value) where TIndex : Enum

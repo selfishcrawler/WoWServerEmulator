@@ -42,7 +42,33 @@ public class AuthServerCommandHandler : ConsoleCommandHandler
 
     private void HandleAccountCreateCommand(ReadOnlySpan<string> args)
     {
-        
+        if (args.Length != 2)
+        {
+            Log.Error("Wrong argument count: provide username and password!");
+            return;
+        }
+        if (args[0].Length > 16)
+        {
+            Log.Error("Username cannot be longer than 16 chars");
+            return;
+        }
+        var salt = SRP6.GenerateSalt().ToArray();
+        var verifier = SRP6.CalculateVerifier(args[0], args[1], salt);
+        try
+        {
+            _loginDatabase.ExecuteNonQuery(_loginDatabase.CreateAccount, new KeyValuePair<string, object>[]
+            {
+            new("@Username", args[0].ToUpper()),
+            new("@Verifier", verifier.ToArray()),
+            new("@Salt", salt),
+            });
+        }
+        catch (Exception ex)
+        {
+            Log.Error($"Cannot create account with values: {ex.Message}");
+            return;
+        }
+        Log.Message("Account created successfully");
     }
 
     private void HandleServerCommand(ReadOnlySpan<string> args)

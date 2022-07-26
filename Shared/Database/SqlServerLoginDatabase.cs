@@ -6,6 +6,7 @@ public sealed class SqlServerLoginDatabase : SqlServerDatabase, ILoginDatabase
     {
     }
 
+    public string CreateAccount => "INSERT INTO [Accounts] ([Name], [Verifier], [Salt], [SessionKey]) VALUES (@Username, @Verifier, @Salt, NULL);";
     public string GetSessionKey => "SELECT [SessionKey] FROM [Accounts] WHERE [Name]=@Name;";
     public string GetUserAuthData => "SELECT [Verifier], [Salt] From [Accounts] WHERE [Name]=@Name;";
     public string SetSessionKey => "UPDATE [Accounts] SET [SessionKey]=@SessionKey WHERE [Name]=@Name;";

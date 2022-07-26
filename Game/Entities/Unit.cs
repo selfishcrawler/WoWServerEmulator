@@ -1,12 +1,6 @@
-﻿using Shared.Extensions;
-
-namespace Game.Entities;
+﻿namespace Game.Entities;
 using static EUnitFields;
 
-public struct UnitPosition
-{
-    public float X, Y, Z, Orientation;
-}
 
 public abstract class Unit : BaseEntity
 {
@@ -87,7 +81,6 @@ public abstract class Unit : BaseEntity
         }
     }
 
-    public UnitPosition Position { get; set; }
     public float WalkSpeed { get; set; }
     public float RunSpeed { get; set; }
     public float BackwardsRunSpeed { get; set; }
@@ -139,16 +132,5 @@ public abstract class Unit : BaseEntity
     {
         uint powerField = (uint)UNIT_FIELD_MAXPOWER1 + (uint)type;
         SetField((EUnitFields)powerField, value);
-    }
-
-    public void SetPosition(float x, float y, float z, float o)
-    {
-        Position = new UnitPosition()
-        {
-            X = x,
-            Y = y,
-            Z = z,
-            Orientation = o,
-        };
     }
 }
