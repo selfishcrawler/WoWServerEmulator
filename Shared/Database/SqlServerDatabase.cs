@@ -11,6 +11,17 @@ public abstract class SqlServerDatabase : IDatabase
         _connectionString = connectionString;
     }
 
+    private SqlCommand PrepareQuery(string statement, SqlConnection conn, in KeyValuePair<string, object>[] parameters)
+    {
+        conn.Open();
+        SqlCommand cmd = new(statement, conn);
+        if (parameters is null)
+            return cmd;
+        foreach (var parameter in parameters)
+            cmd.Parameters.AddWithValue(parameter.Key, parameter.Value);
+        return cmd;
+    }
+
     public void ExecuteNonQuery(string statement, in KeyValuePair<string, object>[] parameters)
     {
         using var connection = new SqlConnection(_connectionString);
@@ -54,17 +65,6 @@ public abstract class SqlServerDatabase : IDatabase
         using var connection = new SqlConnection(_connectionString);
         SqlCommand cmd = PrepareQuery(statement, connection, parameters);
         return (TOut)cmd.ExecuteScalar();
-    }
-
-    private SqlCommand PrepareQuery(string statement, SqlConnection conn, in KeyValuePair<string, object>[] parameters)
-    {
-        conn.Open();
-        SqlCommand cmd = new(statement, conn);
-        if (parameters is null)
-            return cmd;
-        foreach (var parameter in parameters)
-            cmd.Parameters.AddWithValue(parameter.Key, parameter.Value);
-        return cmd;
     }
 
     public (TOut1, TOut2, TOut3) ExecuteSingleRaw<TOut1, TOut2, TOut3>(string statement, in KeyValuePair<string, object>[] parameters)

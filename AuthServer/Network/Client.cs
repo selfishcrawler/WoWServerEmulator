@@ -249,7 +249,7 @@ public class Client
         _authed = true;
     }
 
-    private void CloseConnection()
+    public void CloseConnection()
     {
         _stream.Close();
         _client.Close();

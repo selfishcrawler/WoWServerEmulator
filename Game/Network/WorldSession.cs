@@ -94,10 +94,104 @@ public partial class WorldSession
         }
     }
 
-    private unsafe void HandleCharCreate(ClientPacketHeader _)
+    private unsafe void HandleCharCreate(ClientPacketHeader header)
     {
-        _smsg.Write(47); //result
-        SendPacket(SMSG_CHAR_CREATE);
+        CMSG_CHAR_CREATE pkt;
+        int index = Array.IndexOf<byte>(_cmsg, 0);
+
+        if (index == -1 || header.Length - index - 1 != sizeof(CMSG_CHAR_CREATE))
+        {
+            Disconnect();
+            return;
+        }
+
+        fixed (byte* ptr = &_cmsg[index + 1])
+            pkt = *(CMSG_CHAR_CREATE*)ptr;
+        string name = Encoding.UTF8.GetString(_cmsg, 0, index);
+
+        if (name.Length < 2)
+        {
+            SendResponce(ResponseCode.CHAR_NAME_TOO_SHORT);
+            return;
+        }
+        if (name.Length > 16)
+        {
+            SendResponce(ResponseCode.CHAR_NAME_TOO_LONG);
+            return;
+        }
+
+        if (!Enum.IsDefined(pkt.Race) ||
+            !Enum.IsDefined(pkt.Class) ||
+            !Enum.IsDefined(pkt.Gender))
+        {
+            SendResponce(ResponseCode.CHAR_CREATE_FAILED);
+            return;
+        }
+
+        (var nameUsed, var charCount, var canCreateDK, var hasDK) =
+            _loginDatabase.ExecuteSingleRaw<bool, int, bool, bool>(_loginDatabase.GetCharacterCreationInfo, new KeyValuePair<string, object>[]
+        {
+            new("@Account", _accountId),
+            new("@Name", name),
+            new("@Realm", WorldManager.RealmID),
+        });
+
+        if (nameUsed)
+        {
+            SendResponce(ResponseCode.CHAR_CREATE_NAME_IN_USE);
+            return;
+        }
+
+        if (charCount > 10)
+        {
+            SendResponce(ResponseCode.CHAR_CREATE_SERVER_LIMIT);
+            return;
+        }
+
+        if (pkt.Class == Class.DeathKnight)
+        {
+            if (!canCreateDK)
+            {
+                SendResponce(ResponseCode.CHAR_CREATE_LEVEL_REQUIREMENT);
+                return;
+            }
+            if (hasDK)
+            {
+                SendResponce(ResponseCode.CHAR_CREATE_UNIQUE_CLASS_LIMIT);
+                return;
+            }
+        }
+
+        (var map, var zone, var pos) = WorldManager.GetStartingPosition(pkt.Race, pkt.Class);
+
+        _loginDatabase.ExecuteNonQuery(_loginDatabase.CreateCharacter, new KeyValuePair<string, object>[]
+        {
+            new("@Account", _accountId),
+            new("@Realm", WorldManager.RealmID),
+            new("@Name", name),
+            new("@Level", pkt.Class == Class.DeathKnight ? 55 : 1),
+            new("@Race", pkt.Race),
+            new("@Class", pkt.Class),
+            new("@Gender", pkt.Gender),
+            new("@Map", map),
+            new("@Zone", zone),
+            new("@X", pos.X),
+            new("@Y", pos.Y),
+            new("@Z", pos.Z),
+            new("@Orientation", pos.Orientation),
+            new("@Skin", pkt.Skin),
+            new("@Face", pkt.Face),
+            new("@HairStyle", pkt.HairStyle),
+            new("@HairColor", pkt.HairColor),
+            new("@FacialStyle", pkt.FacialStyle),
+        });
+        SendResponce(ResponseCode.CHAR_CREATE_SUCCESS);
+
+        void SendResponce(ResponseCode code)
+        {
+            _smsg.Write(code);
+            SendPacket(SMSG_CHAR_CREATE);
+        }
     }
 
     private unsafe void HandleCharEnum(ClientPacketHeader _)
@@ -146,6 +240,11 @@ public partial class WorldSession
             }
         }
         SendPacket(SMSG_CHAR_ENUM);
+    }
+
+    private void HandleCharDelete(ClientPacketHeader _)
+    {
+
     }
 
     private unsafe void HandlePlayerLogin(ClientPacketHeader _)
@@ -375,7 +474,7 @@ public partial class WorldSession
                 var serverHeader = new ServerPacketHeader(11, SMSG_AUTH_RESPONSE);
                 _encryptor.Encrypt(ref serverHeader);
                 _smsg.Write(serverHeader);
-                _smsg.Write(12); //todo: auth result enum
+                _smsg.Write(ResponseCode.AUTH_OK);
                 _smsg.Write((uint)0);
                 _smsg.Write(0);
                 _smsg.Write((uint)0);
@@ -433,7 +532,7 @@ public partial class WorldSession
         }
         if (_client.Available == length)
         {
-            _stream.Read(_cmsg, 0, (int)length);
+            _stream.Read(_cmsg, 0, length);
             return;
         }
         int bytesRead = 0;
@@ -445,7 +544,7 @@ public partial class WorldSession
 
     public void SendPacket(ReadOnlySpan<byte> packet, Opcode opcode)
     {
-        lock(_stream)
+        lock (_stream)
         {
             var header = new ServerPacketHeader((ushort)packet.Length, opcode);
             _encryptor.Encrypt(ref header);

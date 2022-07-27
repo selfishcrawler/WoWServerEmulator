@@ -5,7 +5,8 @@ public enum Opcode : uint
 {
     CMSG_CHAR_CREATE                            = 0x036,
     CMSG_CHAR_ENUM                              = 0x037,
-
+    CMSG_CHAR_DELETE                            = 0x038,
+    //SMSG_AUTH_SRP6_RESPONSE 0x039
     SMSG_CHAR_CREATE                            = 0x03A,
     SMSG_CHAR_ENUM                              = 0x03B,
     SMSG_CHAR_DELETE                            = 0x03C,
@@ -108,6 +109,7 @@ public partial class WorldSession
     {
         CMSG_CHAR_CREATE => HandleCharCreate,
         CMSG_CHAR_ENUM => HandleCharEnum,
+        CMSG_CHAR_DELETE => HandleCharDelete,
         CMSG_PLAYER_LOGIN => HandlePlayerLogin,
         CMSG_LOGOUT_REQUEST => HandleLogoutRequest,
         CMSG_NAME_QUERY => HandleNameQuery,

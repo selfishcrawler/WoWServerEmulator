@@ -65,7 +65,14 @@ public class Server
             tcpClient.SendTimeout = (int)WriteTimeout.TotalMilliseconds;
             tcpClient.ReceiveTimeout = 1;
             var client = new Client(tcpClient, this);
-            _ = client.HandleConnection();
+            _ = client.HandleConnection().ContinueWith((t, c) =>
+            {
+                if (t.IsFaulted)
+                {
+                    Log.Error("Unhandled exception in auth session");
+                    (c as Client).CloseConnection();
+                }
+            }, client);
         }
     }
 

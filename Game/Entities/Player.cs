@@ -1,6 +1,4 @@
-﻿using Shared.Extensions;
-
-namespace Game.Entities;
+﻿namespace Game.Entities;
 using static EUnitFields;
 
 public sealed class Player : Unit

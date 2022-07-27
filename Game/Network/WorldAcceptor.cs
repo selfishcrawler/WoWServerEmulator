@@ -58,7 +58,14 @@ public class WorldAcceptor
             tcpClient.SendTimeout = (int)WriteTimeout.TotalMilliseconds;
             tcpClient.ReceiveTimeout = 3;
             var client = new WorldSession(tcpClient);
-            _ = client.InitConnection(_cts.Token);
+            _ = client.InitConnection(_cts.Token).ContinueWith((t, c) =>
+            {
+                if (t.IsFaulted)
+                {
+                    Log.Error("Unhandled exception in world session");
+                    (c as WorldSession).Disconnect();
+                }
+            }, client);
         }
     }
 
