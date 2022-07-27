@@ -24,5 +24,6 @@ public sealed class SqlServerLoginDatabase : SqlServerDatabase, ILoginDatabase
     public string GetCharacterList => "SELECT [Guid], [Name], [Race], [Class], [Gender]," +
         "[Skin], [Face], [HairStyle], [HairColor], [FacialStyle]," +
         "[Level], [Zone], [Map], [X], [Y], [Z] FROM [Characters] WHERE [Account]=@Account AND [Realm]=@Realm;";
-    public string GetCharacterInfo => throw new NotImplementedException();
+    public string GetCharacterInfo => "SELECT [Name], [Level], [Race], [Class], [Gender], [Map], [Zone], [X], [Y], [Z], [Orientation]," +
+        "[Skin], [Face], [HairStyle], [HairColor], [FacialStyle] FROM [Characters] WHERE [Guid]=@Guid;";
 }

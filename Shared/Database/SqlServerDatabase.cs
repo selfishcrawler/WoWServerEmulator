@@ -140,4 +140,20 @@ public abstract class SqlServerDatabase : IDatabase
         }
         return (default(TOut1), default(TOut2), default(TOut3), default(TOut4), default(TOut5), default(TOut6));
     }
+
+    public object[] ExecuteSingleRaw(string statement, in KeyValuePair<string, object>[] parameters)
+    {
+        using var connection = new SqlConnection(_connectionString);
+        SqlCommand cmd = PrepareQuery(statement, connection, parameters);
+        var reader = cmd.ExecuteReader();
+        if (!reader.HasRows)
+            return null;
+        object[] result = new object[reader.FieldCount];
+        while (reader.Read())
+        {
+            reader.GetValues(result);
+        }
+        reader.Close();
+        return result;
+    }
 }

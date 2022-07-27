@@ -13,6 +13,8 @@ public static class WorldManager
     public static byte RealmID { get; private set; }
     public static RealmTimeZone RealmTimeZone { get; private set; }
     public static RealmType RealmType { get; private set; }
+    public const int StartingLevel = 1;
+    public const int DKStartingLevel = 55;
 
     public static void InitWorld(byte realmID, ILoginDatabase ldb)
     {
@@ -64,12 +66,12 @@ public static class WorldManager
         }
     }
 
-    public static string GetPlayerNameByGUID(ulong guid)
+    public static Player GetPlayerByGUID(ulong guid)
     {
         foreach (var session in _sessions)
             if (session.ActiveCharacter is not null)
                 if (session.ActiveCharacter.Guid == guid)
-                    return session.ActiveCharacter.Name;
+                    return session.ActiveCharacter;
         return null;
     }
 

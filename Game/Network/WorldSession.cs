@@ -169,7 +169,7 @@ public partial class WorldSession
             new("@Account", _accountId),
             new("@Realm", WorldManager.RealmID),
             new("@Name", name),
-            new("@Level", pkt.Class == Class.DeathKnight ? 55 : 1),
+            new("@Level", pkt.Class == Class.DeathKnight ? WorldManager.DKStartingLevel : WorldManager.StartingLevel),
             new("@Race", pkt.Race),
             new("@Class", pkt.Class),
             new("@Gender", pkt.Gender),
@@ -205,7 +205,7 @@ public partial class WorldSession
         _smsg.Write((byte)charList.Count());
         foreach (var character in charList)
         {
-            _smsg.Write((ulong)(int)character[0]);
+            _smsg.Write((ulong)(long)character[0]);
             _smsg.Write(character[1].ToString());
             _smsg.Write((byte)character[2]);
             _smsg.Write((byte)character[3]);
@@ -247,22 +247,41 @@ public partial class WorldSession
 
     }
 
-    private unsafe void HandlePlayerLogin(ClientPacketHeader _)
+    private unsafe void HandlePlayerLogin(ClientPacketHeader header)
     {
         //SendRedirect(0);
+        if (header.Length != sizeof(CMSG_PLAYER_LOGIN))
+        {
+            Disconnect();
+            return;
+        }
         CMSG_PLAYER_LOGIN pkt;
         fixed (byte* ptr = &_cmsg[0])
             pkt = *(CMSG_PLAYER_LOGIN*)ptr;
 
+        /*    public string GetCharacterInfo => "SELECT [Name], [Level], [Race], [Class], [Gender], [Map], [Zone], [X], [Y], [Z], [Orientation]," +
+        "[Skin], [Face], [HairStyle], [HairColor], [FacialStyle] FROM [Characters] WHERE [Guid]=@Guid;";*/
+        var charInfo = _loginDatabase.ExecuteSingleRaw(_loginDatabase.GetCharacterInfo, new KeyValuePair<string, object>[]
+        {
+            new("@Guid", (long)pkt.Guid)
+        });
+
+        if (charInfo is null)
+        {
+            Disconnect();
+            return;
+        }
+
         ActiveCharacter = new Player((uint)pkt.Guid)
         {
+            Name = charInfo[0].ToString(),
             Alive = true,
             CurrentHealth = 100,
             MaxHealth = 200,
-            Level = 80,
-            Race = Race.Human,
-            Class = Class.Warrior,
-            Gender = Gender.Female,
+            Level = (uint)(int)charInfo[1],
+            Race = (Race)charInfo[2],
+            Class = (Class)charInfo[3],
+            Gender = (Gender)charInfo[4],
             PowerType = PowerType.Happiness,
             DisplayID = 19724,
             NativeDisplayID = 19724,
@@ -272,16 +291,16 @@ public partial class WorldSession
             BackwardsRunSpeed = 1f
         };
 
-        ActiveCharacter.SetPosition(-8949.95F, -132.493F, 83.5312F, 0f);
+        ActiveCharacter.SetPosition((float)charInfo[7], (float)charInfo[8], (float)charInfo[9], (float)charInfo[10]);
         ActiveCharacter.SetCurrentPower(PowerType.Happiness, 1000000);
         ActiveCharacter.SetMaxPower(PowerType.Happiness, 2000000);
 
 
-        _smsg.Write((uint)0);
-        _smsg.Write(-8949.95F);
-        _smsg.Write(-132.493F);
-        _smsg.Write(83.5312F);
-        _smsg.Write(0.0F);
+        _smsg.Write((uint)(int)charInfo[5]);
+        _smsg.Write(ActiveCharacter.Position.X);
+        _smsg.Write(ActiveCharacter.Position.Y);
+        _smsg.Write(ActiveCharacter.Position.Z);
+        _smsg.Write(ActiveCharacter.Position.Orientation);
         SendPacket(SMSG_LOGIN_VERIFY_WORLD);
 
         for (int i = 0; i < 8; i++)
@@ -315,33 +334,23 @@ public partial class WorldSession
         }, null, TimeSpan.FromSeconds(instantLogout ? 0 : 20), TimeSpan.Zero);
     }
 
-    private void HandleNameQuery(ClientPacketHeader _)
+    private void HandleNameQuery(ClientPacketHeader header)
     {
+        if (header.Length != sizeof(ulong))
+        {
+            Disconnect();
+            return;
+        }
         ulong guid = BitConverter.ToUInt64(_cmsg);
-        if (guid == 3)
-        {
-            //TODO: read guid then responce
-            _smsg.Write(new byte[] { 1, 3 }); //packed guid
-            _smsg.Write(0);
-            _smsg.Write("Тестчардва");
-            _smsg.Write(0); // realm name
-            _smsg.Write(ActiveCharacter.Race);
-            _smsg.Write(ActiveCharacter.Gender);
-            _smsg.Write(ActiveCharacter.Class);
-            _smsg.Write(0);
-        }
-        else
-        {
-            //TODO: read guid then responce
-            _smsg.Write(ActiveCharacter.PackedGuid); //packed guid
-            _smsg.Write(0);
-            _smsg.Write("Тестчарбд");
-            _smsg.Write(0); // realm name
-            _smsg.Write(ActiveCharacter.Race);
-            _smsg.Write(ActiveCharacter.Gender);
-            _smsg.Write(ActiveCharacter.Class);
-            _smsg.Write(0);
-        }
+        var player = WorldManager.GetPlayerByGUID(guid);
+        _smsg.Write(player.PackedGuid);
+        _smsg.Write(0);
+        _smsg.Write(player.Name);
+        _smsg.Write(0); // realm name
+        _smsg.Write(player.Race);
+        _smsg.Write(player.Gender);
+        _smsg.Write(player.Class);
+        _smsg.Write(0);
         SendPacket(SMSG_NAME_QUERY_RESPONSE);
     }
 
