@@ -81,6 +81,10 @@ public abstract class Unit : BaseEntity
         }
     }
 
+    public MovementFlags MovementFlags { get; set; }
+
+    public MovementFlags2 ExtraMovementFlags { get; set; }
+
     public float WalkSpeed { get; set; }
     public float RunSpeed { get; set; }
     public float BackwardsRunSpeed { get; set; }
@@ -103,8 +107,8 @@ public abstract class Unit : BaseEntity
 
     protected void BuildMovementBlock(MemoryStream ms)
     {
-        ms.Write((uint)0); //movement flags
-        ms.Write((ushort)0); //extra movement flags
+        ms.Write(MovementFlags);
+        ms.Write(ExtraMovementFlags);
         ms.Write((uint)DateTimeOffset.Now.ToUnixTimeSeconds()); //timestamp
         ms.Write(Position.X);
         ms.Write(Position.Y);

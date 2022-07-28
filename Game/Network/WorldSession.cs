@@ -272,6 +272,9 @@ public partial class WorldSession
             return;
         }
 
+        Race race = (Race)charInfo[2];
+        Gender gender = (Gender)charInfo[4];
+
         ActiveCharacter = new Player((uint)pkt.Guid)
         {
             Name = charInfo[0].ToString(),
@@ -279,12 +282,12 @@ public partial class WorldSession
             CurrentHealth = 100,
             MaxHealth = 200,
             Level = (uint)(int)charInfo[1],
-            Race = (Race)charInfo[2],
+            Race = race,
             Class = (Class)charInfo[3],
-            Gender = (Gender)charInfo[4],
+            Gender = gender,
             PowerType = PowerType.Happiness,
-            DisplayID = 19724,
-            NativeDisplayID = 19724,
+            DisplayID = WorldManager.GetCharacterDisplayId(race, gender),
+            NativeDisplayID = WorldManager.GetCharacterDisplayId(race, gender),
 
             WalkSpeed = 1f,
             RunSpeed = 3f,
@@ -408,9 +411,9 @@ public partial class WorldSession
         _smsg.Write(time);
         _smsg.Write(1);
         _smsg.Write((uint)0x15);
-        for (int i = 0; i < 8; i++)
+        for (int i = 0; i < 3; i++)
         {
-            _smsg.Write((uint)0);
+            _smsg.Write((uint)time);
         }
         SendPacket(SMSG_ACCOUNT_DATA_TIMES);
     }

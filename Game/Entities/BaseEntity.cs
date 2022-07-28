@@ -39,7 +39,7 @@ public abstract class BaseEntity
             {
                 if (HighGuid[i] != 0)
                 {
-                    packed[0] |= (byte)(1 << i);
+                    packed[0] |= (byte)(1 << (i+4));
                     packed[count++] = HighGuid[i];
                 }
             }
@@ -119,7 +119,7 @@ public abstract class BaseEntity
     {
         ms.Write(_maskSize);
 
-        byte[] maskBuffer = new byte[(_mask.Length + 8) / 8 + 2]; //?
+        byte[] maskBuffer = new byte[_maskSize * sizeof(uint)];
         _mask.CopyTo(maskBuffer, 0);
         ms.Write(maskBuffer);
 

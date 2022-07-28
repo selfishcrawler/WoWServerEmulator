@@ -47,7 +47,7 @@ public enum PowerType : byte
     RunicPower
 }
 
-enum MovementFlags : uint
+public enum MovementFlags : uint
 {
     MOVEMENTFLAG_NONE = 0x00000000,
     MOVEMENTFLAG_FORWARD = 0x00000001,
@@ -83,7 +83,7 @@ enum MovementFlags : uint
     MOVEMENTFLAG_HOVER = 0x40000000,
 };
 
-enum MovementFlags2 : ushort
+public enum MovementFlags2 : ushort
 {
     MOVEMENTFLAG2_NONE = 0x00000000,
     MOVEMENTFLAG2_NO_STRAFE = 0x00000001,

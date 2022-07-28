@@ -20,7 +20,7 @@ public sealed class Player : Unit
 
     public void BuildUpdatePacket(MemoryStream ms, bool self = true)
     {
-        BuildUpdatePacket(ObjectUpdateType.CreateObject, ms);
+        BuildUpdatePacket(ObjectUpdateType.CreateObject2, ms);
         ObjectUpdateFlag updateFlags = ObjectUpdateFlag.None;
         if (Alive)
             updateFlags |= ObjectUpdateFlag.Living;

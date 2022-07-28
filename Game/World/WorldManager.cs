@@ -2,7 +2,6 @@
 using Game.Network;
 using Shared.Database;
 using Shared.RealmInfo;
-using System.Net.Sockets;
 
 namespace Game.World;
 
@@ -15,12 +14,32 @@ public static class WorldManager
     public static RealmType RealmType { get; private set; }
     public const int StartingLevel = 1;
     public const int DKStartingLevel = 55;
+    static Creature c;
 
     public static void InitWorld(byte realmID, ILoginDatabase ldb)
     {
         _sessions = new List<WorldSession>(100);
         LoginDatabase = ldb;
         RealmID = realmID;
+        
+        c = new Creature(1)
+        {
+            Entry = 1,
+            Position = new Position() { X = -8949.95f, Y = -132.493f, Z = 83.5312f, Orientation = 0.0f },
+            Alive = true,
+            Name = "TestUnit",
+            CurrentHealth = 50,
+            MaxHealth = 150,
+            Level = 5,
+            DisplayID = 23006,
+            NativeDisplayID = 23006,
+            Race = Race.Human,
+            Class = Class.Warrior,
+            Gender = Gender.Male,
+            PowerType = PowerType.Mana,
+        };
+        c.SetCurrentPower(PowerType.Mana, 1);
+        c.SetCurrentPower(PowerType.Mana, 100);
     }
 
     public static void AddSession(WorldSession session)
@@ -51,6 +70,11 @@ public static class WorldManager
             self.SendPacket(surroundingPlayers, Opcode.SMSG_UPDATE_OBJECT);
             session.SendPacket(broadcast, Opcode.SMSG_UPDATE_OBJECT);
         }
+
+        using MemoryStream units = new();
+        units.Write((uint)1);
+        c.BuildUpdatePacket(units);
+        self.SendPacket(units, Opcode.SMSG_UPDATE_OBJECT);
     }
 
     public static void BroadcastMovementPacket(WorldSession self, ReadOnlySpan<byte> packet, Opcode pktType)
@@ -89,5 +113,30 @@ public static class WorldManager
         (Race.BloodElf, _) => (530, 3431, new Position() { X = 10349.6f, Y = -6357.29f, Z = 33.4026f, Orientation = 5.31605f }),
         (Race.Draenei, _) => (530, 3526, new Position() { X = -3961.64f, Y = -13931.2f, Z = 100.615f, Orientation = 2.08364f }),
         _ => (0, 0, default(Position)),
+    };
+
+    public static uint GetCharacterDisplayId(Race race, Gender gender) => (race, gender) switch
+    {
+        (Race.Human, Gender.Male) => 49,
+        (Race.Human, Gender.Female) => 50,
+        (Race.Orc, Gender.Male) => 51,
+        (Race.Orc, Gender.Female) => 52,
+        (Race.Dwarf, Gender.Male) => 53,
+        (Race.Dwarf, Gender.Female) => 54,
+        (Race.NightElf, Gender.Male) => 55,
+        (Race.NightElf, Gender.Female) => 56,
+        (Race.Undead, Gender.Male) => 57,
+        (Race.Undead, Gender.Female) => 58,
+        (Race.Tauren, Gender.Male) => 59,
+        (Race.Tauren, Gender.Female) => 60,
+        (Race.Gnome, Gender.Male) => 1563,
+        (Race.Gnome, Gender.Female) => 1564,
+        (Race.Troll, Gender.Male) => 1478,
+        (Race.Troll, Gender.Female) => 1479,
+        (Race.BloodElf, Gender.Male) => 15476,
+        (Race.BloodElf, Gender.Female) => 15475,
+        (Race.Draenei, Gender.Male) => 16125,
+        (Race.Draenei, Gender.Female) => 16126,
+        (_,_) => 0,
     };
 }
