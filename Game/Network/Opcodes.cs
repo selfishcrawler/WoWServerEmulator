@@ -100,6 +100,9 @@ public enum Opcode : uint
 
     SMSG_REDIRECT_CLIENT                        = 0x50D,
     CMSG_REDIRECTION_FAILED                     = 0x50E,
+    SMSG_SUSPEND_COMMS                          = 0x50F,
+    CMSG_SUSPEND_COMMS_ACK                      = 0x510,
+    SMSG_RESUME_COMMS                           = 0x511,
     CMSG_REDIRECTION_AUTH_PROOF                 = 0x512,
 }
 

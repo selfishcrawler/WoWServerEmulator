@@ -508,7 +508,7 @@ public partial class WorldSession
                 loginBytes.CopyTo(c);
                 _sessionKey.CopyTo(c[(loginBytes.Length..)]);
                 _seed.CopyTo(c[(loginBytes.Length + 40)..]);
-
+                _encryptor = new ARC4(_sessionKey);
                 if (SHA1.HashData(c).SequenceEqual(hash.ToArray()))
                 {
                     Log.Message("Successful redirect");
