@@ -12,5 +12,6 @@ public interface ILoginDatabase : IDatabase
     public string GetCharacterCreationInfo { get; }
     public string CreateCharacter { get; }
     public string GetCharacterList { get; }
+    public string GetCharacterMap { get; }
     public string GetCharacterInfo { get; }
 }

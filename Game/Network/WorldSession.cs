@@ -8,6 +8,8 @@ using Game.Cryptography;
 using Game.Entities;
 using Game.Network.PacketStructs;
 using Game.World;
+using System;
+using System.Reflection;
 
 namespace Game.Network;
 
@@ -58,23 +60,6 @@ public partial class WorldSession
         await HandlePacketFlow();
     }
 
-    private void SendRedirect(uint nodeID)
-    {
-        Span<byte> host = stackalloc byte[6];
-        Span<byte> hash = stackalloc byte[20];
-        IPAddress ip = IPAddress.Loopback;
-        ip.TryWriteBytes(host, out _);
-        BitConverter.GetBytes((ushort)8086).CopyTo(host[4..]);
-        HMACSHA1.HashData(_sessionKey, host, hash);
-
-        _smsg.Write(host);
-        _smsg.Write((uint)0);
-        _smsg.Write(hash);
-        SendPacket(SMSG_REDIRECT_CLIENT);
-        _smsg.Write((uint)0);
-        SendPacket(SMSG_SUSPEND_COMMS);
-    }
-
     private async Task HandlePacketFlow()
     {
         while (!_cts.IsCancellationRequested)
@@ -94,6 +79,23 @@ public partial class WorldSession
             ReceiveFullPacket(header.Length);
             GetHandlerForPacket(header)(header);
         }
+    }
+
+    private void SendRedirect(uint nodeID)
+    {
+        Span<byte> host = stackalloc byte[6];
+        Span<byte> hash = stackalloc byte[20];
+        IPAddress ip = IPAddress.Loopback;
+        ip.TryWriteBytes(host, out _);
+        BitConverter.GetBytes((ushort)8086).CopyTo(host[4..]);
+        HMACSHA1.HashData(_sessionKey, host, hash);
+
+        _smsg.Write(host);
+        _smsg.Write((uint)0);
+        _smsg.Write(hash);
+        SendPacket(SMSG_REDIRECT_CLIENT);
+        _smsg.Write((uint)0);
+        SendPacket(SMSG_SUSPEND_COMMS);
     }
 
     private unsafe void HandleCharCreate(ClientPacketHeader header)
@@ -317,7 +319,6 @@ public partial class WorldSession
 
     private unsafe void HandlePlayerLogin(ClientPacketHeader header)
     {
-        //SendRedirect(0);
         if (header.Length != sizeof(CMSG_PLAYER_LOGIN))
         {
             Disconnect();
@@ -326,72 +327,11 @@ public partial class WorldSession
         CMSG_PLAYER_LOGIN pkt;
         fixed (byte* ptr = &_cmsg[0])
             pkt = *(CMSG_PLAYER_LOGIN*)ptr;
+        _loginDatabase.ExecuteSingleValue<int>(_loginDatabase.GetCharacterMap, new KeyValuePair<string, object>[]
+        {
+            new("@Guid", (long)pkt.Guid),
+        }); ;
         SendRedirect(0);
-        return;
-        /*    public string GetCharacterInfo => "SELECT [Name], [Level], [Race], [Class], [Gender], [Map], [Zone], [X], [Y], [Z], [Orientation]," +
-        "[Skin], [Face], [HairStyle], [HairColor], [FacialStyle] FROM [Characters] WHERE [Guid]=@Guid;";*/
-        var charInfo = _loginDatabase.ExecuteSingleRaw(_loginDatabase.GetCharacterInfo, new KeyValuePair<string, object>[]
-        {
-            new("@Guid", (long)pkt.Guid)
-        });
-
-        if (charInfo is null)
-        {
-            Disconnect();
-            return;
-        }
-
-        Race race = (Race)charInfo[2];
-        Gender gender = (Gender)charInfo[4];
-
-        ActiveCharacter = new Player((uint)pkt.Guid)
-        {
-            Name = charInfo[0].ToString(),
-            Alive = true,
-            CurrentHealth = 100,
-            MaxHealth = 200,
-            Level = (uint)(int)charInfo[1],
-            Race = race,
-            Class = (Class)charInfo[3],
-            Gender = gender,
-            PowerType = PowerType.Happiness,
-            DisplayID = WorldManager.GetCharacterDisplayId(race, gender),
-            NativeDisplayID = WorldManager.GetCharacterDisplayId(race, gender),
-
-            WalkSpeed = 1f,
-            RunSpeed = 3f,
-            BackwardsRunSpeed = 1f
-        };
-
-        ActiveCharacter.SetPosition((float)charInfo[7], (float)charInfo[8], (float)charInfo[9], (float)charInfo[10]);
-        ActiveCharacter.SetCurrentPower(PowerType.Happiness, 1000000);
-        ActiveCharacter.SetMaxPower(PowerType.Happiness, 2000000);
-
-
-        _smsg.Write((uint)(int)charInfo[5]);
-        _smsg.Write(ActiveCharacter.Position.X);
-        _smsg.Write(ActiveCharacter.Position.Y);
-        _smsg.Write(ActiveCharacter.Position.Z);
-        _smsg.Write(ActiveCharacter.Position.Orientation);
-        SendPacket(SMSG_LOGIN_VERIFY_WORLD);
-
-        for (int i = 0; i < 8; i++)
-            _smsg.Write((uint)0xFF);
-        SendPacket(SMSG_TUTORIAL_FLAGS);
-
-        _smsg.Write((uint)1); // block count
-        ActiveCharacter.BuildUpdatePacket(_smsg);
-
-        SendPacket(SMSG_UPDATE_OBJECT);
-
-        WorldManager.AddPlayerToWorld(this);
-
-        _smsg.Write(_timeSyncSequenceIndex++);
-        SendPacket(SMSG_TIME_SYNC_REQ);
-
-        _smsg.Write(2);
-        _smsg.Write(0); //voice chat disable
-        SendPacket(SMSG_FEATURE_SYSTEM_STATUS);
     }
 
     private void HandleLogoutRequest(ClientPacketHeader _)
@@ -493,11 +433,11 @@ public partial class WorldSession
         Log.Warning($"Received unhandled packet: 0x{code:X3}");
     }
 
-    private unsafe void ProcessAuthSession(byte[] serverSeed, byte[] clientSeed)
+    private void ProcessAuthSession(byte[] serverSeed, byte[] clientSeed)
     {
         var header = new ClientPacketHeader(BitConverter.ToUInt16(_cmsg, 0), (Opcode)BitConverter.ToUInt32(_cmsg, 2));
-        if (header.Opcode != CMSG_AUTH_SESSION &&
-            header.Opcode != CMSG_REDIRECTION_AUTH_PROOF)
+        if (header.Opcode is not CMSG_AUTH_SESSION &&
+            header.Opcode is not CMSG_REDIRECTION_AUTH_PROOF)
         {
             Log.Error("Wrong opcode");
             Disconnect();
@@ -505,94 +445,116 @@ public partial class WorldSession
         }
 
         ReceiveFullPacket(header.Length);
-        int index;
         switch (header.Opcode)
         {
             case CMSG_AUTH_SESSION:
-                index = Array.IndexOf<byte>(_cmsg, 0, 8) + 1;
-                CMSG_AUTH_SESSION pkt;
-                fixed (byte* ptr = &_cmsg[0])
-                {
-                    pkt = *(CMSG_AUTH_SESSION*)ptr;
-                    _username = Encoding.UTF8.GetString(_cmsg, 8, index - 9);
-                    pkt.LoginServerType = *(uint*)(ptr + index);
-                    pkt.Seed = *(uint*)(ptr + index + 4);
-                    pkt.RegionID = *(uint*)(ptr + index + 8);
-                    pkt.BattlegroupID = *(uint*)(ptr + index + 12);
-                    pkt.RealmID = *(uint*)(ptr + index + 16);
-                    pkt.DOS = *(uint*)(ptr + index + 20);
-                    Span<byte> proof = new(ptr + index + 28, 20);
-                    pkt.AddonData = (ptr + index + 48);
-
-                    byte[] login = Encoding.UTF8.GetBytes(_username);
-                    Span<byte> concat = stackalloc byte[login.Length + 52];
-                    login.CopyTo(concat);
-                    (stackalloc byte[] { 0, 0, 0, 0 }).CopyTo(concat[(login.Length)..]);
-                    BitConverter.GetBytes(pkt.Seed).CopyTo(concat[(login.Length + 4)..]);
-                    _seed.CopyTo(concat[(login.Length + 8)..]);
-
-                    (_accountId, _sessionKey) = _loginDatabase.ExecuteSingleRaw<int, byte[]>(_loginDatabase.GetAccountInfoByUsername, new KeyValuePair<string, object>[]
-                    {
-                        new ("@Name", _username),
-                    });
-
-                    if (_sessionKey is default(byte[]))
-                    {
-                        Disconnect();
-                        return;
-                    }
-
-                    _sessionKey.CopyTo(concat[(login.Length + 12)..]);
-                    if (!SHA1.HashData(concat).SequenceEqual(proof.ToArray()))
-                    {
-                        Disconnect();
-                        return;
-                    }
-                }
-
-
-                _encryptor = new ARC4(_sessionKey);
-                var serverHeader = new ServerPacketHeader(11, SMSG_AUTH_RESPONSE);
-                _encryptor.Encrypt(ref serverHeader);
-                _smsg.Write(serverHeader);
-                _smsg.Write(ResponseCode.AUTH_OK);
-                _smsg.Write((uint)0);
-                _smsg.Write(0);
-                _smsg.Write((uint)0);
-                _smsg.Write(2); //expansion
-                _stream.PushPacket(_smsg);
+                HandleAuthSession();
                 break;
             case CMSG_REDIRECTION_AUTH_PROOF:
-                index = Array.IndexOf<byte>(_cmsg, 0, 0) + 1;
-                _username = Encoding.UTF8.GetString(_cmsg, 0, index - 1);
-                Span<byte> hash = _cmsg.AsSpan()[(index + 8)..(index+28)];
-
-                (_accountId,_sessionKey) = _loginDatabase.ExecuteSingleRaw<int, byte[]>(_loginDatabase.GetAccountInfoByUsername, new KeyValuePair<string, object>[]
-                {
-                    new ("@Name", _username),
-                });
-
-                byte[] loginBytes = Encoding.UTF8.GetBytes(_username);
-                Span<byte> c = stackalloc byte[loginBytes.Length + 44];
-                loginBytes.CopyTo(c);
-                _sessionKey.CopyTo(c[(loginBytes.Length..)]);
-                _seed.CopyTo(c[(loginBytes.Length + 40)..]);
-                _encryptor = new ARC4(_sessionKey, serverSeed, clientSeed);
-                SendPacket(SMSG_RESUME_COMMS);
-                if (SHA1.HashData(c).SequenceEqual(hash.ToArray()))
-                {
-                    Log.Message("Successful redirect");
-                    HandlePlayerLogin(2);
-                }
-                else
-                {
-                    Disconnect();
-                    return;
-                }
-
+                HandleRedirectionAuthProof(serverSeed, clientSeed);
                 break;
         }
         WorldManager.AddSession(this);
+    }
+
+    private unsafe void HandleAuthSession()
+{
+        int index = Array.IndexOf<byte>(_cmsg, 0, 8) + 1;
+        CMSG_AUTH_SESSION pkt;
+        fixed (byte* ptr = &_cmsg[0])
+        {
+            pkt = *(CMSG_AUTH_SESSION*)ptr;
+            _username = Encoding.UTF8.GetString(_cmsg, 8, index - 9);
+            pkt.LoginServerType = *(uint*)(ptr + index);
+            pkt.Seed = *(uint*)(ptr + index + 4);
+            pkt.RegionID = *(uint*)(ptr + index + 8);
+            pkt.BattlegroupID = *(uint*)(ptr + index + 12);
+            pkt.RealmID = *(uint*)(ptr + index + 16);
+            pkt.DOS = *(uint*)(ptr + index + 20);
+            Span<byte> proof = new(ptr + index + 28, 20);
+            pkt.AddonData = (ptr + index + 48);
+
+            byte[] login = Encoding.UTF8.GetBytes(_username);
+            Span<byte> concat = stackalloc byte[login.Length + 52];
+            login.CopyTo(concat);
+            (stackalloc byte[] { 0, 0, 0, 0 }).CopyTo(concat[login.Length..]);
+            BitConverter.GetBytes(pkt.Seed).CopyTo(concat[(login.Length + 4)..]);
+            _seed.CopyTo(concat[(login.Length + 8)..]);
+
+            if (!QueryAccountInfo(_username))
+            {
+                Disconnect();
+                return;
+            }
+
+            _sessionKey.CopyTo(concat[(login.Length + 12)..]);
+
+            if (!IsCorrectClientChallengeResponce(proof, concat))
+            {
+                Disconnect();
+                return;
+            }
+        }
+
+        _encryptor = new ARC4(_sessionKey);
+        var serverHeader = new ServerPacketHeader(11, SMSG_AUTH_RESPONSE);
+        _encryptor.Encrypt(ref serverHeader);
+        _smsg.Write(serverHeader);
+        _smsg.Write(ResponseCode.AUTH_OK);
+        _smsg.Write((uint)0);
+        _smsg.Write(0);
+        _smsg.Write((uint)0);
+        _smsg.Write(2); //expansion
+        _stream.PushPacket(_smsg);
+    }
+
+    private void HandleRedirectionAuthProof(byte[] serverSeed, byte[] clientSeed)
+    {
+        int index = Array.IndexOf<byte>(_cmsg, 0, 0) + 1;
+        _username = Encoding.UTF8.GetString(_cmsg, 0, index - 1);
+        Span<byte> hash = _cmsg.AsSpan()[(index + 8)..(index + 28)];
+
+        if (!QueryAccountInfo(_username))
+        {
+            Disconnect();
+            return;
+        }
+
+        byte[] loginBytes = Encoding.UTF8.GetBytes(_username);
+        Span<byte> concat = stackalloc byte[loginBytes.Length + 44];
+        loginBytes.CopyTo(concat);
+        _sessionKey.CopyTo(concat[(loginBytes.Length..)]);
+        _seed.CopyTo(concat[(loginBytes.Length + 40)..]);
+        _encryptor = new ARC4(_sessionKey, serverSeed, clientSeed);
+        SendPacket(SMSG_RESUME_COMMS);
+
+        if (!IsCorrectClientChallengeResponce(hash, concat))
+        {
+            Disconnect();
+            return;
+        }
+        HandlePlayerLogin(2); //ask cluster where to go
+    }
+
+    private bool QueryAccountInfo(string username)
+    {
+        (_accountId, _sessionKey) = _loginDatabase.ExecuteSingleRaw<int, byte[]>(_loginDatabase.GetAccountInfoByUsername, new KeyValuePair<string, object>[]
+        {
+            new ("@Name", _username),
+        });
+
+        if (_sessionKey is default(byte[]))
+            return false;
+        return true;
+    }
+
+    private bool IsCorrectClientChallengeResponce(ReadOnlySpan<byte> clientData, ReadOnlySpan<byte> serverConcat)
+    {
+        Span<byte> hash = stackalloc byte[20];
+        SHA1.HashData(serverConcat, hash);
+        if (hash.SequenceEqual(clientData))
+            return true;
+        return false;
     }
 
     private (byte[], byte[]) SendAuthChallenge()
@@ -603,7 +565,6 @@ public partial class WorldSession
         _smsg.Write(_seed);
         byte[] serverSeed = RandomNumberGenerator.GetBytes(16);
         byte[] clientSeed = RandomNumberGenerator.GetBytes(16);
-        //_smsg.Write(RandomNumberGenerator.GetBytes(32));
         _smsg.Write(serverSeed);
         _smsg.Write(clientSeed);
         _stream.PushPacket(_smsg);
