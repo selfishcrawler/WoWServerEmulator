@@ -49,12 +49,12 @@ public partial class WorldSession
 
     public async Task InitConnection(CancellationToken serverToken)
     {
-        SendAuthChallenge();
+        (var serverSeed, var clientSeed) = SendAuthChallenge();
         _cts = CancellationTokenSource.CreateLinkedTokenSource(serverToken);
         int bytesRead = await _stream.ReadAsync(_cmsg, 0, ClientHeaderSize, _cts.Token);
         if (bytesRead == 0)
             Disconnect();
-        ProcessAuthSession();
+        ProcessAuthSession(serverSeed, clientSeed);
         await HandlePacketFlow();
     }
 
@@ -493,7 +493,7 @@ public partial class WorldSession
         Log.Warning($"Received unhandled packet: 0x{code:X3}");
     }
 
-    private unsafe void ProcessAuthSession()
+    private unsafe void ProcessAuthSession(byte[] serverSeed, byte[] clientSeed)
     {
         var header = new ClientPacketHeader(BitConverter.ToUInt16(_cmsg, 0), (Opcode)BitConverter.ToUInt32(_cmsg, 2));
         if (header.Opcode != CMSG_AUTH_SESSION &&
@@ -577,7 +577,7 @@ public partial class WorldSession
                 loginBytes.CopyTo(c);
                 _sessionKey.CopyTo(c[(loginBytes.Length..)]);
                 _seed.CopyTo(c[(loginBytes.Length + 40)..]);
-                _encryptor = new ARC4(_sessionKey);
+                _encryptor = new ARC4(_sessionKey, serverSeed, clientSeed);
                 SendPacket(SMSG_RESUME_COMMS);
                 if (SHA1.HashData(c).SequenceEqual(hash.ToArray()))
                 {
@@ -595,14 +595,19 @@ public partial class WorldSession
         WorldManager.AddSession(this);
     }
 
-    private void SendAuthChallenge()
+    private (byte[], byte[]) SendAuthChallenge()
     {
         var header = new ServerPacketHeader(40, SMSG_AUTH_CHALLENGE);
         _smsg.Write(header);
         _smsg.Write((uint)1);
         _smsg.Write(_seed);
-        _smsg.Write(RandomNumberGenerator.GetBytes(32));
+        byte[] serverSeed = RandomNumberGenerator.GetBytes(16);
+        byte[] clientSeed = RandomNumberGenerator.GetBytes(16);
+        //_smsg.Write(RandomNumberGenerator.GetBytes(32));
+        _smsg.Write(serverSeed);
+        _smsg.Write(clientSeed);
         _stream.PushPacket(_smsg);
+        return (serverSeed, clientSeed);
     }
 
     private void ReceiveFullPacket(ushort length)

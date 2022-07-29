@@ -12,16 +12,16 @@ public class ARC4
     private readonly byte[] _decryptionState;
     private byte encrX, encrY, decrX, decrY;
 
-    public ARC4(ReadOnlySpan<byte> sessionKey)
+    public ARC4(ReadOnlySpan<byte> sessionKey, byte[] encryptionSeed = null, byte[] decryptionSeed = null)
     {
         _encryptionState = new byte[256];
         _decryptionState = new byte[256];
         encrX = encrY = decrX = decrY = 0;
         Span<byte> hash = stackalloc byte[20];
-        HMACSHA1.HashData(encryptionKey, sessionKey, hash);
+        HMACSHA1.HashData(encryptionSeed ?? encryptionKey, sessionKey, hash);
         Init(hash, _encryptionState);
 
-        HMACSHA1.HashData(decryptionKey, sessionKey, hash);
+        HMACSHA1.HashData(decryptionSeed ?? decryptionKey, sessionKey, hash);
         Init(hash, _decryptionState);
 
         Span<byte> drop = stackalloc byte[1024];
