@@ -71,6 +71,8 @@ public partial class WorldSession
         _smsg.Write((uint)0);
         _smsg.Write(hash);
         SendPacket(SMSG_REDIRECT_CLIENT);
+        _smsg.Write((uint)0);
+        SendPacket(SMSG_SUSPEND_COMMS);
     }
 
     private async Task HandlePacketFlow()
@@ -247,6 +249,72 @@ public partial class WorldSession
 
     }
 
+    private void HandlePlayerLogin(uint guid)
+    {
+        var charInfo = _loginDatabase.ExecuteSingleRaw(_loginDatabase.GetCharacterInfo, new KeyValuePair<string, object>[]
+        {
+            new("@Guid", (long)guid)
+        });
+
+        if (charInfo is null)
+        {
+            Disconnect();
+            return;
+        }
+
+        Race race = (Race)charInfo[2];
+        Gender gender = (Gender)charInfo[4];
+
+        ActiveCharacter = new Player(guid)
+        {
+            Name = charInfo[0].ToString(),
+            Alive = true,
+            CurrentHealth = 100,
+            MaxHealth = 200,
+            Level = (uint)(int)charInfo[1],
+            Race = race,
+            Class = (Class)charInfo[3],
+            Gender = gender,
+            PowerType = PowerType.Happiness,
+            DisplayID = WorldManager.GetCharacterDisplayId(race, gender),
+            NativeDisplayID = WorldManager.GetCharacterDisplayId(race, gender),
+
+            WalkSpeed = 1f,
+            RunSpeed = 3f,
+            BackwardsRunSpeed = 1f
+        };
+
+        ActiveCharacter.SetPosition((float)charInfo[7], (float)charInfo[8], (float)charInfo[9], (float)charInfo[10]);
+        ActiveCharacter.SetCurrentPower(PowerType.Happiness, 1000000);
+        ActiveCharacter.SetMaxPower(PowerType.Happiness, 2000000);
+
+
+        _smsg.Write((uint)(int)charInfo[5]);
+        _smsg.Write(ActiveCharacter.Position.X);
+        _smsg.Write(ActiveCharacter.Position.Y);
+        _smsg.Write(ActiveCharacter.Position.Z);
+        _smsg.Write(ActiveCharacter.Position.Orientation);
+        SendPacket(SMSG_LOGIN_VERIFY_WORLD);
+
+        for (int i = 0; i < 8; i++)
+            _smsg.Write((uint)0xFF);
+        SendPacket(SMSG_TUTORIAL_FLAGS);
+
+        _smsg.Write((uint)1); // block count
+        ActiveCharacter.BuildUpdatePacket(_smsg);
+
+        SendPacket(SMSG_UPDATE_OBJECT);
+
+        WorldManager.AddPlayerToWorld(this);
+
+        _smsg.Write(_timeSyncSequenceIndex++);
+        SendPacket(SMSG_TIME_SYNC_REQ);
+
+        _smsg.Write(2);
+        _smsg.Write(0); //voice chat disable
+        SendPacket(SMSG_FEATURE_SYSTEM_STATUS);
+    }
+
     private unsafe void HandlePlayerLogin(ClientPacketHeader header)
     {
         //SendRedirect(0);
@@ -258,7 +326,8 @@ public partial class WorldSession
         CMSG_PLAYER_LOGIN pkt;
         fixed (byte* ptr = &_cmsg[0])
             pkt = *(CMSG_PLAYER_LOGIN*)ptr;
-
+        SendRedirect(0);
+        return;
         /*    public string GetCharacterInfo => "SELECT [Name], [Level], [Race], [Class], [Gender], [Map], [Zone], [X], [Y], [Z], [Orientation]," +
         "[Skin], [Face], [HairStyle], [HairColor], [FacialStyle] FROM [Characters] WHERE [Guid]=@Guid;";*/
         var charInfo = _loginDatabase.ExecuteSingleRaw(_loginDatabase.GetCharacterInfo, new KeyValuePair<string, object>[]
@@ -509,9 +578,11 @@ public partial class WorldSession
                 _sessionKey.CopyTo(c[(loginBytes.Length..)]);
                 _seed.CopyTo(c[(loginBytes.Length + 40)..]);
                 _encryptor = new ARC4(_sessionKey);
+                SendPacket(SMSG_RESUME_COMMS);
                 if (SHA1.HashData(c).SequenceEqual(hash.ToArray()))
                 {
                     Log.Message("Successful redirect");
+                    HandlePlayerLogin(2);
                 }
                 else
                 {
