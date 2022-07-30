@@ -1,5 +1,6 @@
 ﻿using Game.Entities;
 using Game.Network;
+using Game.Network.Clustering;
 using Shared.Database;
 using Shared.RealmInfo;
 
@@ -8,6 +9,7 @@ namespace Game.World;
 public static class WorldManager
 {
     private static List<WorldSession> _sessions;
+    public static INodeManager NodeManager { get; private set; }
     public static ILoginDatabase LoginDatabase { get; private set; }
     public static byte RealmID { get; private set; }
     public static RealmTimeZone RealmTimeZone { get; private set; }
@@ -16,11 +18,12 @@ public static class WorldManager
     public const int DKStartingLevel = 55;
     static Creature c;
 
-    public static void InitWorld(byte realmID, ILoginDatabase ldb)
+    public static void InitWorld(byte realmID, ILoginDatabase ldb, INodeManager nodeManager)
     {
         _sessions = new List<WorldSession>(100);
         LoginDatabase = ldb;
         RealmID = realmID;
+        NodeManager = nodeManager;
         
         c = new Creature(1)
         {
@@ -45,6 +48,7 @@ public static class WorldManager
     public static void AddSession(WorldSession session)
     {
         _sessions.Add(session);
+        NodeManager.AddSession(session);
     }
 
     public static void RemoveSession(WorldSession session)

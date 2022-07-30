@@ -1,4 +1,6 @@
-﻿using Game.Network;
+﻿using System.Net;
+using Game.Network;
+using Game.Network.Clustering;
 using Game.World;
 using Microsoft.Extensions.Configuration;
 using Shared.Database;
@@ -20,7 +22,9 @@ internal class Program
             new ("@Id", ID),
         });
 
-        WorldManager.InitWorld(ID, LoginDatabase);
+        NodeManager node = new(1, IPAddress.Loopback, 3000);
+
+        WorldManager.InitWorld(ID, LoginDatabase, node);
         WorldAcceptor acceptor = new(address, 8086)
         {
             Timeout = TimeSpan.FromSeconds(3),

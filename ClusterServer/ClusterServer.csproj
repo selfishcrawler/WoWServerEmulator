@@ -13,7 +13,7 @@
   </ItemGroup>
 
 	<ItemGroup>
-		<Using Include="Shared" />
+		<Using Include="Shared.ConsoleHelpers" />
 	</ItemGroup>
 
 </Project>

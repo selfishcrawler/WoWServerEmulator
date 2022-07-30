@@ -1,9 +1,9 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using System.Net;
+using Microsoft.Extensions.Configuration;
 using Game.Network;
 using Game.World;
 using Shared.Database;
 using Shared.RealmInfo;
-
 
 namespace ClusterServer;
 
@@ -21,7 +21,9 @@ public static class Program
             new ("@Id", ID),
         });
 
-        WorldManager.InitWorld(ID, LoginDatabase);
+        ClusterManager manager = new(IPAddress.Loopback, 3000);
+
+        WorldManager.InitWorld(ID, LoginDatabase, manager);
         WorldAcceptor acceptor = new(address, port)
         {
             Timeout = TimeSpan.FromSeconds(3),

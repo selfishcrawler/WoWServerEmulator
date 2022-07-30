@@ -8,8 +8,6 @@ using Game.Cryptography;
 using Game.Entities;
 using Game.Network.PacketStructs;
 using Game.World;
-using System;
-using System.Reflection;
 
 namespace Game.Network;
 
@@ -32,11 +30,12 @@ public partial class WorldSession
 
     private readonly byte[] _seed;
     private byte[] _sessionKey;
-    private int _accountId;
+    //private int _accountId;
     private string _username;
     private uint _timeSyncSequenceIndex;
     private Timer _logoutTimer;
     public Player ActiveCharacter { get; private set; }
+    public int AccountID { get; private set; }
 
     public WorldSession(TcpClient client)
     {
@@ -81,13 +80,12 @@ public partial class WorldSession
         }
     }
 
-    private void SendRedirect(uint nodeID)
+    public void SendRedirect(IPAddress ip, ushort port)
     {
         Span<byte> host = stackalloc byte[6];
         Span<byte> hash = stackalloc byte[20];
-        IPAddress ip = IPAddress.Loopback;
         ip.TryWriteBytes(host, out _);
-        BitConverter.GetBytes((ushort)8086).CopyTo(host[4..]);
+        BitConverter.GetBytes(port).CopyTo(host[4..]);
         HMACSHA1.HashData(_sessionKey, host, hash);
 
         _smsg.Write(host);
@@ -135,7 +133,7 @@ public partial class WorldSession
         (var nameUsed, var charCount, var canCreateDK, var hasDK) =
             _loginDatabase.ExecuteSingleRaw<bool, int, bool, bool>(_loginDatabase.GetCharacterCreationInfo, new KeyValuePair<string, object>[]
         {
-            new("@Account", _accountId),
+            new("@Account", AccountID),
             new("@Name", name),
             new("@Realm", WorldManager.RealmID),
         });
@@ -170,7 +168,7 @@ public partial class WorldSession
 
         _loginDatabase.ExecuteNonQuery(_loginDatabase.CreateCharacter, new KeyValuePair<string, object>[]
         {
-            new("@Account", _accountId),
+            new("@Account", AccountID),
             new("@Realm", WorldManager.RealmID),
             new("@Name", name),
             new("@Level", pkt.Class == Class.DeathKnight ? WorldManager.DKStartingLevel : WorldManager.StartingLevel),
@@ -202,7 +200,7 @@ public partial class WorldSession
     {
         var charList = _loginDatabase.ExecuteMultipleRaws(_loginDatabase.GetCharacterList, new KeyValuePair<string, object>[]
         {
-            new("@Account", _accountId),
+            new("@Account", AccountID),
             new("@Realm", WorldManager.RealmID),
         });
 
@@ -251,7 +249,7 @@ public partial class WorldSession
 
     }
 
-    private void HandlePlayerLogin(uint guid)
+    public void LoginAsCharacter(uint guid)
     {
         var charInfo = _loginDatabase.ExecuteSingleRaw(_loginDatabase.GetCharacterInfo, new KeyValuePair<string, object>[]
         {
@@ -327,11 +325,12 @@ public partial class WorldSession
         CMSG_PLAYER_LOGIN pkt;
         fixed (byte* ptr = &_cmsg[0])
             pkt = *(CMSG_PLAYER_LOGIN*)ptr;
-        _loginDatabase.ExecuteSingleValue<int>(_loginDatabase.GetCharacterMap, new KeyValuePair<string, object>[]
+        int map = _loginDatabase.ExecuteSingleValue<int>(_loginDatabase.GetCharacterMap, new KeyValuePair<string, object>[]
         {
             new("@Guid", (long)pkt.Guid),
-        }); ;
-        SendRedirect(0);
+        });
+
+        WorldManager.NodeManager.EnterWorld(this, map, pkt.Guid);
     }
 
     private void HandleLogoutRequest(ClientPacketHeader _)
@@ -481,7 +480,7 @@ public partial class WorldSession
             BitConverter.GetBytes(pkt.Seed).CopyTo(concat[(login.Length + 4)..]);
             _seed.CopyTo(concat[(login.Length + 8)..]);
 
-            if (!QueryAccountInfo(_username))
+            if (!QueryAccountInfo())
             {
                 Disconnect();
                 return;
@@ -497,15 +496,12 @@ public partial class WorldSession
         }
 
         _encryptor = new ARC4(_sessionKey);
-        var serverHeader = new ServerPacketHeader(11, SMSG_AUTH_RESPONSE);
-        _encryptor.Encrypt(ref serverHeader);
-        _smsg.Write(serverHeader);
         _smsg.Write(ResponseCode.AUTH_OK);
         _smsg.Write((uint)0);
         _smsg.Write(0);
         _smsg.Write((uint)0);
         _smsg.Write(2); //expansion
-        _stream.PushPacket(_smsg);
+        SendPacket(SMSG_AUTH_RESPONSE);
     }
 
     private void HandleRedirectionAuthProof(byte[] serverSeed, byte[] clientSeed)
@@ -514,7 +510,7 @@ public partial class WorldSession
         _username = Encoding.UTF8.GetString(_cmsg, 0, index - 1);
         Span<byte> hash = _cmsg.AsSpan()[(index + 8)..(index + 28)];
 
-        if (!QueryAccountInfo(_username))
+        if (!QueryAccountInfo())
         {
             Disconnect();
             return;
@@ -533,28 +529,22 @@ public partial class WorldSession
             Disconnect();
             return;
         }
-        HandlePlayerLogin(2); //ask cluster where to go
     }
 
-    private bool QueryAccountInfo(string username)
+    private bool QueryAccountInfo()
     {
-        (_accountId, _sessionKey) = _loginDatabase.ExecuteSingleRaw<int, byte[]>(_loginDatabase.GetAccountInfoByUsername, new KeyValuePair<string, object>[]
+        (AccountID, _sessionKey) = _loginDatabase.ExecuteSingleRaw<int, byte[]>(_loginDatabase.GetAccountInfoByUsername, new KeyValuePair<string, object>[]
         {
             new ("@Name", _username),
         });
-
-        if (_sessionKey is default(byte[]))
-            return false;
-        return true;
+        return _sessionKey is not default(byte[]);
     }
 
     private bool IsCorrectClientChallengeResponce(ReadOnlySpan<byte> clientData, ReadOnlySpan<byte> serverConcat)
     {
         Span<byte> hash = stackalloc byte[20];
         SHA1.HashData(serverConcat, hash);
-        if (hash.SequenceEqual(clientData))
-            return true;
-        return false;
+        return hash.SequenceEqual(clientData);
     }
 
     private (byte[], byte[]) SendAuthChallenge()
