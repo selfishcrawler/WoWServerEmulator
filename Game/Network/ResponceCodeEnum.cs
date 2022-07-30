@@ -1,5 +1,17 @@
 ﻿namespace Game.Network;
 
+public enum LoginError : byte
+{
+    ServerUnavailable = 1,
+    CharacterWithNameAlreadyExists,
+    DungeonServersUnavailable,
+    RaceClassCharacterRestricted,
+    CharacterNotFound,
+    CharacterLockedForTransfer,
+    CharacterLockedBilling,
+    WebAuction
+}
+
 public enum ResponseCode : byte
 {
     RESPONSE_SUCCESS = 0,

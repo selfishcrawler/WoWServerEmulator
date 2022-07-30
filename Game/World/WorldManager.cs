@@ -54,6 +54,7 @@ public static class WorldManager
     public static void RemoveSession(WorldSession session)
     {
         _sessions.Remove(session);
+        NodeManager.RemoveSession(session);
     }
 
     public static void AddPlayerToWorld(WorldSession self)

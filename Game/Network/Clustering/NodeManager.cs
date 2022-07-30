@@ -8,10 +8,12 @@ public class NodeManager : INodeManager
     private readonly TcpClient _nodeSession;
     private readonly NetworkStream _stream;
     private readonly List<WorldSession> _sessions;
+    private readonly Dictionary<int, uint> _pendingWorldEnter;
 
     public NodeManager(int nodeId, IPAddress address, int port)
     {
         _sessions = new List<WorldSession>();
+        _pendingWorldEnter = new Dictionary<int, uint>();
         _nodeSession = new TcpClient();
         try
         {
@@ -37,18 +39,39 @@ public class NodeManager : INodeManager
             int accId = BitConverter.ToInt32(buf);
             await _stream.ReadAsync(buf, 0, 8);
             ulong charId = BitConverter.ToUInt32(buf);
-            Thread.Sleep(2000);
-            _sessions.First(x => x.AccountID == accId).LoginAsCharacter((uint)charId);
+
+            var session = _sessions.FirstOrDefault(x => x.AccountID == accId, null);
+            if (session is null)
+                _pendingWorldEnter.Add(accId, (uint)charId);
         }
     }
 
     public void AddSession(WorldSession session)
     {
         _sessions.Add(session);
+        if (_pendingWorldEnter.ContainsKey(session.AccountID))
+        {
+            session.LoginAsCharacter(_pendingWorldEnter[session.AccountID]);
+            _pendingWorldEnter.Remove(session.AccountID);
+        }
+    }
+
+    public void RemoveSession(WorldSession session)
+    {
+        _sessions.Remove(session);
     }
 
     public void EnterWorld(WorldSession session, int map, ulong characterId)
     {
         
+    }
+
+    public void Logout(WorldSession session)
+    {
+        session.SendRedirect(IPAddress.Loopback, 8085);
+    }
+
+    public void RedirectionFailed(WorldSession session)
+    {
     }
 }

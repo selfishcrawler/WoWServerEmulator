@@ -42,13 +42,30 @@ public class ClusterManager : INodeManager
     {
     }
 
+    public void RemoveSession(WorldSession session)
+    {
+    }
+
     public void EnterWorld(WorldSession session, int map, ulong characterId)
     {
         int nodeId = 1; //detect this by map->node mapping
         if (map == 0)
         {
             session.SendRedirect(IPAddress.Loopback, 8086);
+            _nodeSessions[nodeId].SendCommand(session.AccountID, characterId);
         }
-        _nodeSessions[nodeId].SendCommand(session.AccountID, characterId);
+        else
+        {
+            session.SendRedirect(IPAddress.Loopback, 8087);
+        }
+    }
+
+    public void Logout(WorldSession session)
+    {
+    }
+
+    public void RedirectionFailed(WorldSession session)
+    {
+        session.SendLoginError(LoginError.ServerUnavailable);
     }
 }

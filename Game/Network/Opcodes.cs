@@ -12,6 +12,7 @@ public enum Opcode : uint
     SMSG_CHAR_DELETE                            = 0x03C,
     CMSG_PLAYER_LOGIN                           = 0x03D,
 
+    SMSG_CHARACTER_LOGIN_FAILED                 = 0x041,
     SMSG_LOGIN_SET_TIME_SPEED                   = 0x042, //
 
     CMSG_LOGOUT_REQUEST                         = 0x04B,
@@ -157,6 +158,8 @@ public partial class WorldSession
         CMSG_TIME_SYNC_RESP => HandleTimeSyncResponce,
         CMSG_SET_PLAYER_DECLINED_NAMES => HandleSetPlayerDeclinedNames,
         CMSG_READY_FOR_ACCOUNT_DATA_TIMES => HandleReadyForAccountDataTimes,
+
+        CMSG_REDIRECTION_FAILED => HandleRedirectionFailed,
         _ => UnhandledPacket,
     };
 }

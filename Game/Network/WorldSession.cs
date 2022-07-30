@@ -92,8 +92,12 @@ public partial class WorldSession
         _smsg.Write((uint)0);
         _smsg.Write(hash);
         SendPacket(SMSG_REDIRECT_CLIENT);
-        _smsg.Write((uint)0);
-        SendPacket(SMSG_SUSPEND_COMMS);
+    }
+
+    public void SendLoginError(LoginError code)
+    {
+        _smsg.Write(code);
+        SendPacket(SMSG_CHARACTER_LOGIN_FAILED);
     }
 
     private unsafe void HandleCharCreate(ClientPacketHeader header)
@@ -342,6 +346,7 @@ public partial class WorldSession
         _logoutTimer = new Timer((_) =>
         {
             SendPacket(SMSG_LOGOUT_COMPLETE);
+            WorldManager.NodeManager.Logout(this);
         }, null, TimeSpan.FromSeconds(instantLogout ? 0 : 20), TimeSpan.Zero);
     }
 
@@ -424,6 +429,11 @@ public partial class WorldSession
             _smsg.Write((uint)time);
         }
         SendPacket(SMSG_ACCOUNT_DATA_TIMES);
+    }
+
+    private void HandleRedirectionFailed(ClientPacketHeader header)
+    {
+        WorldManager.NodeManager.RedirectionFailed(this);
     }
 
     private void UnhandledPacket(ClientPacketHeader header)
@@ -522,7 +532,6 @@ public partial class WorldSession
         _sessionKey.CopyTo(concat[(loginBytes.Length..)]);
         _seed.CopyTo(concat[(loginBytes.Length + 40)..]);
         _encryptor = new ARC4(_sessionKey, serverSeed, clientSeed);
-        SendPacket(SMSG_RESUME_COMMS);
 
         if (!IsCorrectClientChallengeResponce(hash, concat))
         {
