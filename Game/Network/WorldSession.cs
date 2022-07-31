@@ -538,6 +538,7 @@ public partial class WorldSession
             Disconnect();
             return;
         }
+        SendPacket(SMSG_RESUME_COMMS);
     }
 
     private bool QueryAccountInfo()
