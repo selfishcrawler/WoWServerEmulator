@@ -1,5 +1,5 @@
-﻿using System.Net;
-using System.Net.Sockets;
+﻿using System.Net.Sockets;
+using Game.Network.Clustering;
 
 namespace ClusterServer;
 
@@ -24,7 +24,11 @@ public class NodeSession
 
     public async Task WaitCommands()
     {
-        
+    }
+
+    public void SendCommand(ClusterPacket pkt)
+    {
+        pkt.Send(_stream);
     }
 
     public void SendCommand(int accId, ulong guid)

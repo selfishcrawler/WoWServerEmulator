@@ -69,7 +69,7 @@ public abstract class BaseEntity
         }
     }
     public Position Position { get; set; }
-    public string Name { get; init; }
+    public required string Name { get; init; }
 
     protected BaseEntity(uint guid, int bitCount)
     {

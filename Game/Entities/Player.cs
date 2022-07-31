@@ -8,10 +8,7 @@ public sealed class Player : Unit
     protected override ObjectType ObjectType => ObjectType.Player;
     protected override TypeMask TypeMask => TypeMask.Player | TypeMask.Unit | TypeMask.Object;
 
-    public override uint Entry
-    {
-        get => 0;
-    }
+    public override uint Entry => 0;
 
     public Player(uint guid) : base(guid, (int)PLAYER_END)
     {

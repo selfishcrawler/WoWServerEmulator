@@ -9,7 +9,7 @@ public abstract class Unit : BaseEntity
 
     public bool Alive { get; set; }
 
-    public uint CurrentHealth
+    public required uint CurrentHealth
     {
         get => _currentHealth;
         set
@@ -19,7 +19,7 @@ public abstract class Unit : BaseEntity
         }
     }
 
-    public uint MaxHealth
+    public required uint MaxHealth
     {
         get => _maxHealth;
         set
@@ -29,7 +29,7 @@ public abstract class Unit : BaseEntity
         }
     }
 
-    public uint Level
+    public required uint Level
     {
         get => _level;
         set
@@ -39,7 +39,7 @@ public abstract class Unit : BaseEntity
         }
     }
 
-    public uint DisplayID
+    public required uint DisplayID
     {
         get => _displayID;
         set
@@ -49,7 +49,7 @@ public abstract class Unit : BaseEntity
         }
     }
 
-    public uint NativeDisplayID
+    public required uint NativeDisplayID
     {
         get => _nativeDisplayID;
         set
@@ -59,11 +59,11 @@ public abstract class Unit : BaseEntity
         }
     }
 
-    public Race Race { get; init; }
+    public required Race Race { get; init; }
 
-    public Class Class { get; init; }
+    public required Class Class { get; init; }
 
-    public Gender Gender { get; init; }
+    public required Gender Gender { get; init; }
 
     public unsafe PowerType PowerType
     {

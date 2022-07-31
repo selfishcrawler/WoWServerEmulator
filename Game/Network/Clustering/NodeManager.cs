@@ -31,18 +31,21 @@ public class NodeManager : INodeManager
 
     private async Task ReceiveCommands()
     {
-        Log.Warning("Connected to cluster");
-        byte[] buf = new byte[12];
         while (true)
         {
-            await _stream.ReadAsync(buf, 0, 4);
-            int accId = BitConverter.ToInt32(buf);
-            await _stream.ReadAsync(buf, 0, 8);
-            ulong charId = BitConverter.ToUInt32(buf);
-
-            var session = _sessions.FirstOrDefault(x => x.AccountID == accId, null);
-            if (session is null)
-                _pendingWorldEnter.Add(accId, (uint)charId);
+            ClusterPacket pkt = await ClusterPacket.ReceiveAsync(_stream);
+            switch (pkt)
+            {
+                case EnterWorldPacket ewp:
+                    var session = _sessions.FirstOrDefault(x => x.AccountID == ewp.AccountId, null);
+                    if (session is null)
+                        _pendingWorldEnter.Add(ewp.AccountId, ewp.CharacterId);
+                    else
+                        session.LoginAsCharacter(ewp.CharacterId);
+                    break;
+                default:
+                    break;
+            }
         }
     }
 
