@@ -32,7 +32,7 @@ public abstract class ClusterPacket
 
         ClusterPacket Deserialize(byte[] buf)
         {
-            Utf8JsonReader reader = new(buf);
+            var reader = new Utf8JsonReader(buf);
             return JsonSerializer.Deserialize<ClusterPacket>(ref reader);
         }
     }

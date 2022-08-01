@@ -22,8 +22,8 @@ public class ClusterManager : INodeManager
         foreach (var mapping in Database.Cluster.ExecuteMultipleRaws(Database.Cluster.GetNodeMappings, null))
             _nodeMappings[(int)mapping[0]] = (int)mapping[1];
 
-        foreach (var mapping in Database.Cluster.ExecuteMultipleRaws(Database.Cluster.GetNodeEndpoints, null))
-            _nodeAddresses[(int)mapping[0]] = new IPEndPoint(IPAddress.Parse(mapping[1].ToString()), (int)mapping[2]);
+        foreach (var endpoint in Database.Cluster.ExecuteMultipleRaws(Database.Cluster.GetNodeEndpointsForRedirection, null))
+            _nodeAddresses[(int)endpoint[0]] = new IPEndPoint(IPAddress.Parse(endpoint[1].ToString()), (int)endpoint[2]);
 
         _listener = new TcpListener(ip, port);
         try

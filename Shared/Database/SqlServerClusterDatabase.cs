@@ -7,7 +7,7 @@ public sealed class SqlServerClusterDatabase : SqlServerDatabase, IClusterDataba
     }
 
     public string GetClusterConfiguration => "SELECT [IntercomIP], [IntercomPort] From [ClusterConfiguration];";
-    public string GetNodeEndpoint => "SELECT [IP], [Port] FROM [Nodes] WHERE [NodeID]=@ID;";
-    public string GetNodeEndpoints => "SELECT [NodeID], [IP], [PORT] FROM [Nodes];";
+    public string GetNodeEndpoint => "SELECT [ListenIP], [ListenPort] FROM [Nodes] WHERE [NodeID]=@ID;";
+    public string GetNodeEndpointsForRedirection => "SELECT [NodeID], [IP], [PORT] FROM [Nodes];";
     public string GetNodeMappings => "SELECT [MapID], [NodeID] FROM [NodesMapping];";
 }

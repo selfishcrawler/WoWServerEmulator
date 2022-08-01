@@ -357,6 +357,8 @@ public partial class WorldSession
         }
         ulong guid = BitConverter.ToUInt64(_cmsg);
         var player = WorldManager.GetPlayerByGUID(guid);
+        if (player is null)
+            return;
         _smsg.Write(player.PackedGuid);
         _smsg.Write(0);
         _smsg.Write(player.Name);
