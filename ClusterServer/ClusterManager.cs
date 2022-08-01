@@ -60,17 +60,11 @@ public class ClusterManager : INodeManager
 
     public void EnterWorld(WorldSession session, int map, ulong characterId)
     {
-        int nodeId = 1; //detect this by map->node mapping
-        if (map == 0)
-        {
-            session.SendRedirect(IPAddress.Loopback, 8086);
-            EnterWorldPacket pkt = new() { AccountId = session.AccountID, CharacterId = (uint)characterId };
-            _nodeSessions[nodeId].SendCommand(pkt);
-        }
-        else
-        {
-            session.SendRedirect(IPAddress.Loopback, 8087);
-        }
+        var nodeId = _nodeMappings[map];
+        var nodeAddress = _nodeAddresses[nodeId];
+        session.SendRedirect(nodeAddress.Address, (ushort)nodeAddress.Port);
+        EnterWorldPacket pkt = new() { AccountId = session.AccountID, CharacterId = (uint)characterId };
+        _nodeSessions[nodeId].SendCommand(pkt);
     }
 
     public void Logout(WorldSession session)
