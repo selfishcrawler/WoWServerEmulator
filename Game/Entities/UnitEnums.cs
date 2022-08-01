@@ -1,5 +1,22 @@
 ﻿namespace Game.Entities;
 
+[Flags]
+public enum FactionMask : byte
+{
+    All = 1,
+    Alliance = 2,
+    Horde = 4,
+    Monster = 8,
+}
+
+public enum Faction : byte
+{
+    All,
+    Alliance,
+    Horde,
+    Monster
+}
+
 public enum Race : byte
 {
     Human = 1,
@@ -47,6 +64,7 @@ public enum PowerType : byte
     RunicPower
 }
 
+[Flags]
 public enum MovementFlags : uint
 {
     MOVEMENTFLAG_NONE = 0x00000000,
@@ -83,6 +101,7 @@ public enum MovementFlags : uint
     MOVEMENTFLAG_HOVER = 0x40000000,
 };
 
+[Flags]
 public enum MovementFlags2 : ushort
 {
     MOVEMENTFLAG2_NONE = 0x00000000,

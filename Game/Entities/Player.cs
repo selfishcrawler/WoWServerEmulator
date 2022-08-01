@@ -12,7 +12,6 @@ public sealed class Player : Unit
 
     public Player(uint guid) : base(guid, (int)PLAYER_END)
     {
-        SetField(UNIT_FIELD_FACTIONTEMPLATE, 1);
     }
 
     public void BuildUpdatePacket(MemoryStream ms, bool self = true)

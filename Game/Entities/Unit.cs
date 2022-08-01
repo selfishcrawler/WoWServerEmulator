@@ -6,6 +6,8 @@ public abstract class Unit : BaseEntity
 {
     protected uint _currentHealth, _maxHealth, _level, _displayID, _nativeDisplayID;
     protected PowerType _powerType;
+    protected Race _race;
+    protected Faction _faction;
 
     public bool Alive { get; set; }
 
@@ -59,13 +61,26 @@ public abstract class Unit : BaseEntity
         }
     }
 
-    public required Race Race { get; init; }
+    public required Race Race
+    {
+        get => _race;
+        init
+        {
+            _race = value;
+            Faction = _race switch
+            {
+                Race.Orc or Race.Troll or Race.Tauren or Race.Undead or Race.BloodElf => Faction.Horde,
+                Race.Human or Race.Gnome or Race.Dwarf or Race.NightElf or Race.Draenei => Faction.Alliance,
+                _ => Faction.All,
+            };
+        }
+    }
 
     public required Class Class { get; init; }
 
     public required Gender Gender { get; init; }
 
-    public unsafe PowerType PowerType
+    public required unsafe PowerType PowerType
     {
         get => _powerType;
         set
@@ -78,6 +93,16 @@ public abstract class Unit : BaseEntity
             cast[2] = (byte)Gender;
             cast[3] = (byte)value;
             SetField(UNIT_FIELD_BYTES_0, unitBytes);
+        }
+    }
+
+    public Faction Faction
+    {
+        get => _faction;
+        init
+        {
+            _faction = value;
+            SetField(UNIT_FIELD_FACTIONTEMPLATE, value);
         }
     }
 

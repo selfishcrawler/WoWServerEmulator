@@ -38,6 +38,7 @@ public static class WorldManager
             Class = Class.Warrior,
             Gender = Gender.Male,
             PowerType = PowerType.Mana,
+            Faction = Faction.Monster,
         };
         c.SetCurrentPower(PowerType.Mana, 1);
         c.SetCurrentPower(PowerType.Mana, 100);
