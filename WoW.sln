@@ -11,7 +11,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ClusterServer", "ClusterSer
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Game", "Game\Game.csproj", "{60A74432-A30D-4E25-939E-26B0CB304B45}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EasternKingdomsNode", "EasternKingdomsNode\EasternKingdomsNode.csproj", "{C5C3769F-3BA7-40DC-B53A-6D4DEAB5A6BE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EasternKingdomsNode", "EasternKingdomsNode\EasternKingdomsNode.csproj", "{C5C3769F-3BA7-40DC-B53A-6D4DEAB5A6BE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KalimdorNode", "KalimdorNode\KalimdorNode.csproj", "{4CC06F2E-7689-45D4-9E07-2E942453206F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +41,10 @@ Global
 		{C5C3769F-3BA7-40DC-B53A-6D4DEAB5A6BE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C5C3769F-3BA7-40DC-B53A-6D4DEAB5A6BE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C5C3769F-3BA7-40DC-B53A-6D4DEAB5A6BE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4CC06F2E-7689-45D4-9E07-2E942453206F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4CC06F2E-7689-45D4-9E07-2E942453206F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4CC06F2E-7689-45D4-9E07-2E942453206F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4CC06F2E-7689-45D4-9E07-2E942453206F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

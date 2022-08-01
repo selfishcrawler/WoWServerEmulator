@@ -28,6 +28,13 @@ public class NodeSession
 
     public void SendCommand(ClusterPacket pkt)
     {
-        pkt.Send(_stream);
+        try
+        {
+            pkt.Send(_stream);
+        }
+        catch
+        {
+            //node server is crashed, restart here maybe?
+        }
     }
 }
