@@ -5,7 +5,7 @@ using System.Text.Json.Serialization;
 namespace Game.Network.Clustering;
 
 [JsonDerivedType(typeof(EnterWorldPacket), 0)]
-public class ClusterPacket
+public abstract class ClusterPacket
 {
     private static object lockObject = new();
 
@@ -13,10 +13,10 @@ public class ClusterPacket
     {
         using MemoryStream buffer = new(100);
         JsonSerializer.Serialize(buffer, this);
+        buffer.Reset();
         lock (lockObject)
         {
             stream.Write(BitConverter.GetBytes((int)buffer.Length));
-            buffer.Reset();
             buffer.CopyTo(stream);
         }
     }

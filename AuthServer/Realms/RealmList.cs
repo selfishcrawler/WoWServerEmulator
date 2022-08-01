@@ -8,12 +8,10 @@ namespace AuthServer.Realms;
 public class RealmList
 {
     private readonly Dictionary<int, Realm> _realms;
-    private readonly ILoginDatabase _loginDatabase;
 
-    public RealmList(ILoginDatabase database)
+    public RealmList()
     {
         _realms = new Dictionary<int, Realm>();
-        _loginDatabase = database;
         UpdateRealmList();
     }
 
@@ -36,7 +34,7 @@ public class RealmList
 
     public void UpdateRealmList()
     {
-        foreach (var realmObject in _loginDatabase.ExecuteMultipleRaws(_loginDatabase.GetRealmList, null))
+        foreach (var realmObject in Database.Login.ExecuteMultipleRaws(Database.Login.GetRealmList, null))
         {
             byte id = (byte)realmObject[0];
             string name = (string)realmObject[1];

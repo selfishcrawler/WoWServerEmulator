@@ -14,12 +14,11 @@ class Program
 
         Server s;
         var config = new ConfigurationBuilder().AddIniFile("AuthServer.cfg").Build();
-        ILoginDatabase loginDatabase;
         try
         {
             string connString = config["DB:AuthConnectionString"];
-            loginDatabase = new SqlServerLoginDatabase(connString);
-            s = new Server(loginDatabase, "0.0.0.0")
+            Database.Login = new SqlServerLoginDatabase(connString);
+            s = new Server("0.0.0.0")
             {
                 Timeout = TimeSpan.FromSeconds(3),
                 WriteTimeout = TimeSpan.FromMilliseconds(10),
@@ -33,7 +32,7 @@ class Program
             return 1;
         }
 
-        AuthServerCommandHandler commandHandler = new(s, loginDatabase);
+        AuthServerCommandHandler commandHandler = new(s);
         commandHandler.Handle();
         return 0;
     }

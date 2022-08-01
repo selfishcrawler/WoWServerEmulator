@@ -13,17 +13,17 @@ public static class Program
     {
         var config = new ConfigurationBuilder().AddIniFile("ClusterServer.cfg").Build();
         string connString = config["DB:AuthConnectionString"];
-        var LoginDatabase = new SqlServerLoginDatabase(connString);
+        Database.Login = new SqlServerLoginDatabase(connString);
         byte ID = byte.Parse(config["Realm:ID"]);
         (var name, var realmType, var realmFlags, var address, var port, var timezone) =
-            LoginDatabase.ExecuteSingleRaw<string, RealmType, RealmFlags, string, int, RealmTimeZone>(LoginDatabase.GetRealmInfo, new KeyValuePair<string, object>[]
+            Database.Login.ExecuteSingleRaw<string, RealmType, RealmFlags, string, int, RealmTimeZone>(Database.Login.GetRealmInfo, new KeyValuePair<string, object>[]
         {
             new ("@Id", ID),
         });
 
         ClusterManager manager = new(IPAddress.Loopback, 3000);
 
-        WorldManager.InitWorld(ID, LoginDatabase, manager);
+        WorldManager.InitWorld(ID, manager);
         WorldAcceptor acceptor = new(address, port)
         {
             Timeout = TimeSpan.FromSeconds(3),
@@ -31,7 +31,7 @@ public static class Program
         };
         _ = acceptor.Start();
         Console.ReadKey();
-        acceptor.Stop();
+        //acceptor.Stop();
         return 0;
     }
 }

@@ -28,7 +28,6 @@ public class SRP6
     public byte[] ServerPublicKey { get; init; }
 
     private readonly BigInteger _verifier;
-    private readonly ILoginDatabase _db;
 
     static SRP6()
     {
@@ -70,7 +69,7 @@ public class SRP6
 
     public static ReadOnlySpan<byte> GenerateSalt() => RandomNumberGenerator.GetBytes(L);
 
-    public SRP6(byte[] Verifier, byte[] Salt, ILoginDatabase db)
+    public SRP6(byte[] Verifier, byte[] Salt)
     {
         ArgumentNullException.ThrowIfNull(Verifier, nameof(Verifier));
         if (Verifier.Length != L)
@@ -83,7 +82,6 @@ public class SRP6
         var interim = _K * _verifier + BigInteger.ModPow(_G, _b, _N);
         var spk = (interim % _N).ToByteArray();
         ServerPublicKey = spk.Length == L ? spk : spk[..L];
-        _db = db;
     }
 
     public ReadOnlySpan<byte> GetM2(ReadOnlySpan<byte> A, ReadOnlySpan<byte> M1, string username)
@@ -138,7 +136,7 @@ public class SRP6
         SHA1.HashData(bytes, m1);
         if (!m1.SequenceEqual(M1))
             return ReadOnlySpan<byte>.Empty;
-        _db.ExecuteNonQuery(_db.SetSessionKey, new KeyValuePair<string, object>[]
+        Database.Login.ExecuteNonQuery(Database.Login.SetSessionKey, new KeyValuePair<string, object>[]
         {
             new ("@SessionKey", m2[52..].ToArray()),
             new ("@Name", username),

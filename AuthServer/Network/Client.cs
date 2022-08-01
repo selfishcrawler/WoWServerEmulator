@@ -21,7 +21,6 @@ public class Client
     private Server _server;
     private MemoryStream _smsg;
     private bool _authed;
-    private ILoginDatabase _db;
     //reconnect
     private byte[] _sessionKey;
     private byte[] _serverData;
@@ -32,7 +31,6 @@ public class Client
         _stream = client.GetStream();
         _server = server;
 
-        _db = _server.LoginDatabase;
         _buffer = new byte[200];
         _smsg = new MemoryStream(200);
         _authed = false;
@@ -123,7 +121,7 @@ public class Client
         _smsg.Write(AuthCommand.AUTH_LOGON_CHALLENGE);
         _smsg.Write(0);
 
-        (var verifier, var salt) = _db.ExecuteSingleRaw<byte[], byte[]>(_db.GetUserAuthData, new KeyValuePair<string, object>[]
+        (var verifier, var salt) = Database.Login.ExecuteSingleRaw<byte[], byte[]>(Database.Login.GetUserAuthData, new KeyValuePair<string, object>[]
         {
             new ("@Name", _username),
         });
@@ -133,7 +131,7 @@ public class Client
             _stream.PushPacket(_smsg);
             return;
         }
-        _srp = new(verifier, salt, _server.LoginDatabase);
+        _srp = new(verifier, salt);
 
         _smsg.Write(AuthResult.WOW_SUCCESS);
         _smsg.Write(_srp.ServerPublicKey);
@@ -183,7 +181,7 @@ public class Client
             pkt = *(AuthLogonChallengeStruct*)ptr;
         _username = Marshal.PtrToStringAnsi((IntPtr)pkt.AccountName);
 
-        _sessionKey = _db.ExecuteSingleValue<byte[]>(_db.GetSessionKey, new KeyValuePair<string, object>[]
+        _sessionKey = Database.Login.ExecuteSingleValue<byte[]>(Database.Login.GetSessionKey, new KeyValuePair<string, object>[]
         {
             new ("@Name", _username)
         });

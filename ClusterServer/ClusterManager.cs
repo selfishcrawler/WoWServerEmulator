@@ -52,7 +52,6 @@ public class ClusterManager : INodeManager
         if (map == 0)
         {
             session.SendRedirect(IPAddress.Loopback, 8086);
-            //_nodeSessions[nodeId].SendCommand(session.AccountID, characterId);
             EnterWorldPacket pkt = new() { AccountId = session.AccountID, CharacterId = (uint)characterId };
             _nodeSessions[nodeId].SendCommand(pkt);
         }

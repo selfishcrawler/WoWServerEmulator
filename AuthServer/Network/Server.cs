@@ -23,11 +23,10 @@ public class Server
         get => _cts is not null && !_cts.IsCancellationRequested;
     }
     public RealmList RealmList { get; private set; }
-    public ILoginDatabase LoginDatabase { get; private init; }
 
-    public Server(ILoginDatabase loginDB, string ip, int port = DefaultAuthserverPort) : this(loginDB, IPAddress.TryParse(ip, out IPAddress _ip) ? _ip : null, port) { }
+    public Server(string ip, int port = DefaultAuthserverPort) : this(IPAddress.TryParse(ip, out IPAddress _ip) ? _ip : null, port) { }
 
-    public Server(ILoginDatabase loginDB, IPAddress ip, int port = DefaultAuthserverPort)
+    public Server(IPAddress ip, int port = DefaultAuthserverPort)
     {
         ArgumentNullException.ThrowIfNull(ip, nameof(ip));
         if (port < 0 || port > ushort.MaxValue)
@@ -36,8 +35,7 @@ public class Server
         IP = ip;
         Port = port;
         _listener = new TcpListener(IP, Port);
-        LoginDatabase = loginDB;
-        RealmList = new(LoginDatabase);
+        RealmList = new();
     }
 
     public async Task Start()

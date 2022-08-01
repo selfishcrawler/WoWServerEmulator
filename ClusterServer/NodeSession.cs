@@ -30,10 +30,4 @@ public class NodeSession
     {
         pkt.Send(_stream);
     }
-
-    public void SendCommand(int accId, ulong guid)
-    {
-        _stream.Write(BitConverter.GetBytes(accId));
-        _stream.Write(BitConverter.GetBytes(guid));
-    }
 }

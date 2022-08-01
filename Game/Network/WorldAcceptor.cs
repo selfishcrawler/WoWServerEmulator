@@ -18,8 +18,6 @@ public class WorldAcceptor
         get => _cts is not null && !_cts.IsCancellationRequested;
     }
 
-    public ILoginDatabase LoginDatabase { get; init; }
-
     public WorldAcceptor(string ip, int port = DefaultWorldPort) : this(IPAddress.TryParse(ip, out IPAddress _ip) ? _ip : null, port) { }
 
     public WorldAcceptor(IPAddress ip, int port = DefaultWorldPort)

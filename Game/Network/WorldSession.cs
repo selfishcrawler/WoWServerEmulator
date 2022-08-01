@@ -20,7 +20,6 @@ public partial class WorldSession
     private const int DefaultBufferSize = 1000;
     private const int ClientHeaderSize = 6;
     private CancellationTokenSource _cts;
-    private readonly ILoginDatabase _loginDatabase;
 
     private readonly TcpClient _client;
     private readonly NetworkStream _stream;
@@ -30,10 +29,10 @@ public partial class WorldSession
 
     private readonly byte[] _seed;
     private byte[] _sessionKey;
-    //private int _accountId;
     private string _username;
     private uint _timeSyncSequenceIndex;
     private Timer _logoutTimer;
+
     public Player ActiveCharacter { get; private set; }
     public int AccountID { get; private set; }
 
@@ -44,7 +43,6 @@ public partial class WorldSession
         _smsg = new MemoryStream(DefaultBufferSize);
         _cmsg = new byte[DefaultBufferSize];
         _seed = RandomNumberGenerator.GetBytes(4);
-        _loginDatabase = WorldManager.LoginDatabase;
         _timeSyncSequenceIndex = 0;
     }
 
@@ -135,7 +133,7 @@ public partial class WorldSession
         }
 
         (var nameUsed, var charCount, var canCreateDK, var hasDK) =
-            _loginDatabase.ExecuteSingleRaw<bool, int, bool, bool>(_loginDatabase.GetCharacterCreationInfo, new KeyValuePair<string, object>[]
+            Database.Login.ExecuteSingleRaw<bool, int, bool, bool>(Database.Login.GetCharacterCreationInfo, new KeyValuePair<string, object>[]
         {
             new("@Account", AccountID),
             new("@Name", name),
@@ -170,7 +168,7 @@ public partial class WorldSession
 
         (var map, var zone, var pos) = WorldManager.GetStartingPosition(pkt.Race, pkt.Class);
 
-        _loginDatabase.ExecuteNonQuery(_loginDatabase.CreateCharacter, new KeyValuePair<string, object>[]
+        Database.Login.ExecuteNonQuery(Database.Login.CreateCharacter, new KeyValuePair<string, object>[]
         {
             new("@Account", AccountID),
             new("@Realm", WorldManager.RealmID),
@@ -202,7 +200,7 @@ public partial class WorldSession
 
     private unsafe void HandleCharEnum(ClientPacketHeader _)
     {
-        var charList = _loginDatabase.ExecuteMultipleRaws(_loginDatabase.GetCharacterList, new KeyValuePair<string, object>[]
+        var charList = Database.Login.ExecuteMultipleRaws(Database.Login.GetCharacterList, new KeyValuePair<string, object>[]
         {
             new("@Account", AccountID),
             new("@Realm", WorldManager.RealmID),
@@ -255,7 +253,7 @@ public partial class WorldSession
 
     public void LoginAsCharacter(uint guid)
     {
-        var charInfo = _loginDatabase.ExecuteSingleRaw(_loginDatabase.GetCharacterInfo, new KeyValuePair<string, object>[]
+        var charInfo = Database.Login.ExecuteSingleRaw(Database.Login.GetCharacterInfo, new KeyValuePair<string, object>[]
         {
             new("@Guid", (long)guid)
         });
@@ -329,7 +327,7 @@ public partial class WorldSession
         CMSG_PLAYER_LOGIN pkt;
         fixed (byte* ptr = &_cmsg[0])
             pkt = *(CMSG_PLAYER_LOGIN*)ptr;
-        int map = _loginDatabase.ExecuteSingleValue<int>(_loginDatabase.GetCharacterMap, new KeyValuePair<string, object>[]
+        int map = Database.Login.ExecuteSingleValue<int>(Database.Login.GetCharacterMap, new KeyValuePair<string, object>[]
         {
             new("@Guid", (long)pkt.Guid),
         });
@@ -543,7 +541,7 @@ public partial class WorldSession
 
     private bool QueryAccountInfo()
     {
-        (AccountID, _sessionKey) = _loginDatabase.ExecuteSingleRaw<int, byte[]>(_loginDatabase.GetAccountInfoByUsername, new KeyValuePair<string, object>[]
+        (AccountID, _sessionKey) = Database.Login.ExecuteSingleRaw<int, byte[]>(Database.Login.GetAccountInfoByUsername, new KeyValuePair<string, object>[]
         {
             new ("@Name", _username),
         });

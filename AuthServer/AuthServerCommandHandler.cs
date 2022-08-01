@@ -9,13 +9,11 @@ public class AuthServerCommandHandler : ConsoleCommandHandler
     private readonly Dictionary<string, CommandHandler> serverCommands;
     private readonly Dictionary<string, CommandHandler> accountCoomands;
     private readonly Server _server;
-    private readonly ILoginDatabase _loginDatabase;
     private static readonly CancellationTokenSource _cts = new();
 
-    public AuthServerCommandHandler(Server server, ILoginDatabase loginDatabase) : base(_cts.Token)
+    public AuthServerCommandHandler(Server server) : base(_cts.Token)
     {
         _server = server;
-        _loginDatabase = loginDatabase;
         Commands = new Dictionary<string, CommandHandler>()
         {
             { "account", HandleAccountCommand },
@@ -56,7 +54,7 @@ public class AuthServerCommandHandler : ConsoleCommandHandler
         var verifier = SRP6.CalculateVerifier(args[0], args[1], salt);
         try
         {
-            _loginDatabase.ExecuteNonQuery(_loginDatabase.CreateAccount, new KeyValuePair<string, object>[]
+            Database.Login.ExecuteNonQuery(Database.Login.CreateAccount, new KeyValuePair<string, object>[]
             {
             new("@Username", args[0].ToUpper()),
             new("@Verifier", verifier.ToArray()),

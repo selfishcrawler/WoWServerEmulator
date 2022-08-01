@@ -10,7 +10,6 @@ public static class WorldManager
 {
     private static List<WorldSession> _sessions;
     public static INodeManager NodeManager { get; private set; }
-    public static ILoginDatabase LoginDatabase { get; private set; }
     public static byte RealmID { get; private set; }
     public static RealmTimeZone RealmTimeZone { get; private set; }
     public static RealmType RealmType { get; private set; }
@@ -18,10 +17,9 @@ public static class WorldManager
     public const int DKStartingLevel = 55;
     static Creature c;
 
-    public static void InitWorld(byte realmID, ILoginDatabase ldb, INodeManager nodeManager)
+    public static void InitWorld(byte realmID, INodeManager nodeManager)
     {
         _sessions = new List<WorldSession>(100);
-        LoginDatabase = ldb;
         RealmID = realmID;
         NodeManager = nodeManager;
         
