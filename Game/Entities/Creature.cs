@@ -10,7 +10,7 @@ public class Creature : Unit
 
     public Creature(uint guid) : base(guid, (int)UNIT_END)
     {
-        SetField(UNIT_FIELD_FACTIONTEMPLATE, 954);
+        //SetField(UNIT_FIELD_FACTIONTEMPLATE, 954);
         SetField(UNIT_NPC_FLAGS, 0);
         SetField(UNIT_DYNAMIC_FLAGS, 0);
         SetField(UNIT_FIELD_FLAGS, 0x8);
@@ -18,15 +18,15 @@ public class Creature : Unit
         SetField(UNIT_FIELD_BYTES_1, 0);
         SetField(UNIT_FIELD_BOUNDINGRADIUS, 30f);
     }
-    public void BuildUpdatePacket(MemoryStream ms)
+    public void BuildCreatePacket(MemoryStream ms)
     {
-        BuildUpdatePacket(ObjectUpdateType.CreateObject, ms);
+        BuildPacket(ObjectUpdateType.CreateObject, ms);
         ObjectUpdateFlag updateFlags = ObjectUpdateFlag.None;
         if (Alive)
             updateFlags |= ObjectUpdateFlag.Living;
         ms.Write(updateFlags);
 
         BuildMovementBlock(ms);
-        WriteUpdateTable(ms);
+        WriteFullTable(ms);
     }
 }

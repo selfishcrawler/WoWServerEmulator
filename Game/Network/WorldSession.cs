@@ -369,7 +369,7 @@ public partial class WorldSession
         SendPacket(SMSG_TUTORIAL_FLAGS);
 
         _smsg.Write((uint)1); // block count
-        ActiveCharacter.BuildUpdatePacket(_smsg);
+        ActiveCharacter.BuildCreatePacket(_smsg);
 
         SendPacket(SMSG_UPDATE_OBJECT);
 

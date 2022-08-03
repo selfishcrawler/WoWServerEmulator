@@ -135,9 +135,9 @@ public abstract class Unit : BaseEntity
         TurnRate = MathF.PI;
     }
 
-    protected override void BuildUpdatePacket(ObjectUpdateType updateType, MemoryStream ms)
+    protected override void BuildPacket(ObjectUpdateType updateType, MemoryStream ms)
     {
-        base.BuildUpdatePacket(updateType, ms);
+        base.BuildPacket(updateType, ms);
     }
 
     protected void BuildMovementBlock(MemoryStream ms)

@@ -16,9 +16,9 @@ public sealed class Player : Unit
         Equipment = new Item[(int)EquipmentSlot.EQUIPMENT_SLOT_COUNT];
     }
 
-    public void BuildUpdatePacket(MemoryStream ms, bool self = true)
+    public void BuildCreatePacket(MemoryStream ms, bool self = true)
     {
-        BuildUpdatePacket(ObjectUpdateType.CreateObject2, ms);
+        BuildPacket(ObjectUpdateType.CreateObject2, ms);
         ObjectUpdateFlag updateFlags = ObjectUpdateFlag.None;
         if (Alive)
             updateFlags |= ObjectUpdateFlag.Living;
@@ -27,6 +27,6 @@ public sealed class Player : Unit
         ms.Write(updateFlags);
 
         BuildMovementBlock(ms);
-        WriteUpdateTable(ms);
+        WriteFullTable(ms);
     }
 }

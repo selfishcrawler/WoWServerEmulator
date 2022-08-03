@@ -40,7 +40,7 @@ public static class WorldManager
             Class = Class.Warrior,
             Gender = Gender.Male,
             PowerType = PowerType.Mana,
-            Faction = Faction.Monster,
+            Faction = Faction.Alliance,
         };
         c.SetCurrentPower(PowerType.Mana, 1);
         c.SetCurrentPower(PowerType.Mana, 100);
@@ -64,7 +64,7 @@ public static class WorldManager
         using MemoryStream broadcast = new(400);
         using MemoryStream surroundingPlayers = new(400);
         broadcast.Write((uint)1);
-        addingPlayer.BuildUpdatePacket(broadcast, false);
+        addingPlayer.BuildCreatePacket(broadcast, false);
         foreach (var session in _sessions)
         {
             if (session == self)
@@ -72,14 +72,14 @@ public static class WorldManager
 
             //check distance
             surroundingPlayers.Write((uint)1);
-            session.ActiveCharacter.BuildUpdatePacket(surroundingPlayers, false);
+            session.ActiveCharacter.BuildCreatePacket(surroundingPlayers, false);
             self.SendPacket(surroundingPlayers, Opcode.SMSG_UPDATE_OBJECT);
             session.SendPacket(broadcast, Opcode.SMSG_UPDATE_OBJECT);
         }
 
         using MemoryStream units = new();
         units.Write((uint)1);
-        c.BuildUpdatePacket(units);
+        c.BuildCreatePacket(units);
         self.SendPacket(units, Opcode.SMSG_UPDATE_OBJECT);
     }
 
