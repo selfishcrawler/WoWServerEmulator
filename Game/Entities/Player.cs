@@ -9,9 +9,11 @@ public sealed class Player : Unit
     protected override TypeMask TypeMask => TypeMask.Player | TypeMask.Unit | TypeMask.Object;
 
     public override uint Entry => 0;
+    public Item[] Equipment { get; init; }
 
     public Player(uint guid) : base(guid, (int)PLAYER_END)
     {
+        Equipment = new Item[(int)EquipmentSlot.EQUIPMENT_SLOT_COUNT];
     }
 
     public void BuildUpdatePacket(MemoryStream ms, bool self = true)

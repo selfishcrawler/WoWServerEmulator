@@ -1,15 +1,25 @@
 ﻿namespace Game.Entities;
 using static EUnitFields;
 
-
 public abstract class Unit : BaseEntity
 {
     protected uint _currentHealth, _maxHealth, _level, _displayID, _nativeDisplayID;
     protected PowerType _powerType;
     protected Race _race;
     protected Faction _faction;
+    protected Unit _target;
 
     public bool Alive { get; set; }
+    public Unit Target
+    {
+        get => _target;
+        set
+        {
+            _target = value;
+            SetField(UNIT_FIELD_TARGET, BitConverter.ToUInt32(_target.LowGuid));
+            SetField(UNIT_FIELD_TARGET + 1, BitConverter.ToUInt32(_target.HighGuid));
+        }
+    }
 
     public required uint CurrentHealth
     {

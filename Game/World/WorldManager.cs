@@ -1,7 +1,6 @@
 ﻿using Game.Entities;
 using Game.Network;
 using Game.Network.Clustering;
-using Shared.Database;
 using Shared.RealmInfo;
 
 namespace Game.World;
@@ -22,7 +21,10 @@ public static class WorldManager
         _sessions = new List<WorldSession>(100);
         RealmID = realmID;
         NodeManager = nodeManager;
-        
+    }
+
+    public static void InitCreatures()
+    {
         c = new Creature(1)
         {
             Entry = 1,

@@ -79,6 +79,9 @@ public enum Opcode : uint
     SMSG_COMPRESSED_UPDATE_OBJECT               = 0x1F6,
 
     SMSG_ACCOUNT_DATA_TIMES                     = 0x209,
+    CMSG_REQUEST_ACCOUNT_DATA                   = 0x20A,
+    CMSG_UPDATE_ACCOUNT_DATA                    = 0x20B,
+    SMSG_UPDATE_ACCOUNT_DATA                    = 0x20C,
 
     SMSG_LOGIN_VERIFY_WORLD                     = 0x236,
 
@@ -153,6 +156,8 @@ public partial class WorldSession
         MSG_MOVE_HEARTBEAT => HandleMovementPacket,
 
         CMSG_PING => HandlePing,
+        CMSG_REQUEST_ACCOUNT_DATA => HandleRequestAccountData,
+        CMSG_UPDATE_ACCOUNT_DATA => HandleUpdateAccountData,
         CMSG_SET_ACTIVE_MOVER => HandleSetActiveMover,
         CMSG_REALM_SPLIT => HandleRealmSplit,
         CMSG_TIME_SYNC_RESP => HandleTimeSyncResponce,

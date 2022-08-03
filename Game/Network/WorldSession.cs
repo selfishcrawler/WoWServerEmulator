@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System.IO.Compression;
+using System.Net;
 using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Text;
@@ -12,6 +13,43 @@ using Game.World;
 namespace Game.Network;
 
 using static Opcode;
+
+enum AccountDataType
+{
+    GlobalConfigCache,
+    PerCharacterConfigCache,
+    GlobalBindingsCache,
+    PerCharacterBindingsCache,
+    GlobalMacrosCache,
+    PerCharacterMacrosCache,
+    PerCharacterLayourCache,
+    PerCharacterChatCache,
+}
+
+class AccountData
+{
+    private readonly AccountDataType _dataType;
+    public uint Time { get; private set; } = 0;
+    public string Data { get; private set; } = string.Empty;
+
+    public AccountData(AccountDataType type)
+    {
+        _dataType = type;
+    }
+
+    public void Write(MemoryStream ms)
+    {
+        ms.Write((ulong)0);
+        ms.Write(_dataType);
+        ms.Write(Time);
+
+        var data = Encoding.UTF8.GetBytes(Data);
+        ms.Write((uint)data.Length);
+
+        DeflateStream compress = new(ms, CompressionLevel.Optimal, true);
+        compress.Write(data);
+    }
+}
 
 public partial class WorldSession
 {
@@ -382,6 +420,23 @@ public partial class WorldSession
             pkt = *(CMSG_PING*)ptr;
         _smsg.Write(pkt.Ping);
         SendPacket(SMSG_PONG);
+    }
+
+    private void HandleUpdateAccountData(ClientPacketHeader _)
+    {
+        var type = (AccountDataType)BitConverter.ToUInt32(_cmsg);
+        Log.Warning(type);
+    }
+
+    private void HandleRequestAccountData(ClientPacketHeader header)
+    {
+        uint dataType = BitConverter.ToUInt32(_cmsg);
+        if (!Enum.IsDefined((AccountDataType)dataType))
+            return;
+
+        var data = new AccountData((AccountDataType)dataType);
+        data.Write(_smsg);
+        SendPacket(SMSG_UPDATE_ACCOUNT_DATA);
     }
 
     private void HandleSetActiveMover(ClientPacketHeader _)
