@@ -162,6 +162,34 @@ public partial class WorldSession
             return;
         }
 
+        foreach (char c in name)
+        {
+            if (!char.IsLetter(c) || c is not '\'')
+            {
+                SendResponce(ResponseCode.CHAR_NAME_INVALID_CHARACTER);
+                return;
+            }
+        }
+
+        char first = char.ToLower(name[0]);
+        if (first is 'ъ' or 'ь')
+        {
+            SendResponce(ResponseCode.CHAR_NAME_RUSSIAN_SILENT_CHARACTER_AT_BEGINNING_OR_END);
+            return;
+        }
+
+        var nameIsUsed = Database.Login.ExecuteSingleValue<bool>(Database.Login.IsNameInUse, new KeyValuePair<string, object>[]
+        {
+            new("@Name", name),
+            new("@Realm", WorldManager.RealmID),
+        });
+
+        if (nameIsUsed)
+        {
+            SendResponce(ResponseCode.CHAR_CREATE_NAME_IN_USE);
+            return;
+        }
+
         if (!Enum.IsDefined(pkt.Race) ||
             !Enum.IsDefined(pkt.Class) ||
             !Enum.IsDefined(pkt.Gender))

@@ -13,6 +13,7 @@ public sealed class SqlServerLoginDatabase : SqlServerDatabase, ILoginDatabase
     public string GetAccountInfoByUsername => "SELECT [Id], [SessionKey] FROM [Accounts] WHERE [Name]=@Name";
     public string GetRealmList => "SELECT [Id], [Name], [RealmType], [Locked], [RealmFlags], [Address], [Port], [Population], [Timezone], [Build] FROM [Realmlist];";
     public string GetRealmInfo => "SELECT [Name], [RealmType], [RealmFlags], [ListenAddress], [ListenPort], [Timezone] FROM [Realmlist] WHERE [Id]=@Id";
+    public string IsNameInUse => "SELECT CASE WHEN EXISTS(SELECT TOP 1 1 FROM [Characters] WHERE Name=@Name AND Realm=@Realm) THEN CAST(1 AS BIT) ELSE CAST(0 AS BIT) END;";
     public string GetCharacterCreationInfo => "WITH [UserChars] AS (SELECT * FROM [Characters] WHERE [Account] = @Account AND [Realm]=@Realm) SELECT" +
         "(SELECT CASE WHEN EXISTS(SELECT TOP 1 1 FROM [Characters] WHERE [Name]=@Name) THEN CAST(1 AS BIT) ELSE CAST(0 AS BIT) END)," +
         "(SELECT COUNT(*) FROM [UserChars])," +

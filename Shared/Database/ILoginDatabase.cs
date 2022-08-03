@@ -9,6 +9,7 @@ public interface ILoginDatabase : IDatabase
     public string GetAccountInfoByUsername { get; }
     public string GetRealmList { get; }
     public string GetRealmInfo { get; }
+    public string IsNameInUse { get; }
     public string GetCharacterCreationInfo { get; }
     public string CreateCharacter { get; }
     public string GetCharacterList { get; }
