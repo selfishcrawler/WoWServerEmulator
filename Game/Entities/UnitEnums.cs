@@ -9,14 +9,6 @@ public enum FactionMask : byte
     Monster = 8,
 }
 
-public enum Faction : byte
-{
-    All,
-    Alliance,
-    Horde,
-    Monster
-}
-
 public enum Race : byte
 {
     Human = 1,

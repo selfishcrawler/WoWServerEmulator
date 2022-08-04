@@ -3,10 +3,8 @@ using static EUnitFields;
 
 public abstract class Unit : BaseEntity
 {
-    protected uint _currentHealth, _maxHealth, _level, _displayID, _nativeDisplayID;
+    protected uint _currentHealth, _maxHealth, _level, _displayID, _nativeDisplayID, _faction;
     protected PowerType _powerType;
-    protected Race _race;
-    protected Faction _faction;
     protected Unit _target;
 
     public bool Alive { get; set; }
@@ -71,20 +69,7 @@ public abstract class Unit : BaseEntity
         }
     }
 
-    public required Race Race
-    {
-        get => _race;
-        init
-        {
-            _race = value;
-            Faction = _race switch
-            {
-                Race.Orc or Race.Troll or Race.Tauren or Race.Undead or Race.BloodElf => Faction.Horde,
-                Race.Human or Race.Gnome or Race.Dwarf or Race.NightElf or Race.Draenei => Faction.Alliance,
-                _ => Faction.All,
-            };
-        }
-    }
+    public virtual required Race Race { get; init; }
 
     public required Class Class { get; init; }
 
@@ -106,7 +91,7 @@ public abstract class Unit : BaseEntity
         }
     }
 
-    public Faction Faction
+    public uint Faction
     {
         get => _faction;
         init

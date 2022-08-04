@@ -10,6 +10,28 @@ public sealed class Player : Unit
 
     public override uint Entry => 0;
     public Item[] Equipment { get; init; }
+    public override required Race Race
+    {
+        get => base.Race;
+        init
+        {
+            base.Race = value;
+            Faction = (uint)(Race switch
+            {
+                Race.Human => PlayerFaction.Human,
+                Race.Orc => PlayerFaction.Orc,
+                Race.Dwarf => PlayerFaction.Dwarf,
+                Race.NightElf => PlayerFaction.NightElf,
+                Race.Undead => PlayerFaction.Undead,
+                Race.Tauren => PlayerFaction.Tauren,
+                Race.Gnome => PlayerFaction.Gnome,
+                Race.Troll => PlayerFaction.Troll,
+                Race.BloodElf => PlayerFaction.BloodElf,
+                Race.Draenei => PlayerFaction.Draenei,
+                _ => (PlayerFaction)0,
+            });
+        }
+    }
 
     public Player(uint guid) : base(guid, (int)PLAYER_END)
     {
