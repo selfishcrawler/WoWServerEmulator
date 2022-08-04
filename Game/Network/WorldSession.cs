@@ -321,7 +321,8 @@ public partial class WorldSession
     {
         var charInfo = Database.Login.ExecuteSingleRaw(Database.Login.GetCharacterInfo, new KeyValuePair<string, object>[]
         {
-            new("@Guid", (long)guid)
+            new("@Guid", (long)guid),
+            new("@Account", AccountID),
         });
 
         if (charInfo is null)

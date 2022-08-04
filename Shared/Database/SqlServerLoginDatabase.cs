@@ -27,5 +27,5 @@ public sealed class SqlServerLoginDatabase : SqlServerDatabase, ILoginDatabase
         "[Level], [Zone], [Map], [X], [Y], [Z] FROM [Characters] WHERE [Account]=@Account AND [Realm]=@Realm;";
     public string GetCharacterMap => "SELECT [Map] FROM [Characters] WHERE [Guid]=@Guid;";
     public string GetCharacterInfo => "SELECT [Name], [Level], [Race], [Class], [Gender], [Map], [Zone], [X], [Y], [Z], [Orientation]," +
-        "[Skin], [Face], [HairStyle], [HairColor], [FacialStyle] FROM [Characters] WHERE [Guid]=@Guid;";
+        "[Skin], [Face], [HairStyle], [HairColor], [FacialStyle] FROM [Characters] WHERE [Guid]=@Guid AND [Account]=@Account;";
 }

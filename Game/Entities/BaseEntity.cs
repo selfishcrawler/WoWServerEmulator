@@ -44,6 +44,8 @@ public abstract class BaseEntity
                 }
             }
             _packedGuid = packed[..count].ToArray();
+            SetField(OBJECT_FIELD_GUID, BitConverter.ToUInt32(LowGuid));
+            SetField(OBJECT_FIELD_GUID + 1, BitConverter.ToUInt32(HighGuid));
         }
     }
 
@@ -79,8 +81,6 @@ public abstract class BaseEntity
         _updateTable = new SortedDictionary<int, uint>();
         _maskSize = (byte)((bitCount + 31) / 32);
 
-        SetField(OBJECT_FIELD_GUID, BitConverter.ToUInt32(LowGuid));
-        SetField(OBJECT_FIELD_GUID + 1, BitConverter.ToUInt32(HighGuid));
         SetField(OBJECT_FIELD_TYPE, TypeMask);
         Scale = 1.0f;
     }
