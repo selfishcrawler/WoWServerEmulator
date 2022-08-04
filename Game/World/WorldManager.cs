@@ -25,8 +25,9 @@ public static class WorldManager
 
     public static void InitCreatures()
     {
-        c = new Creature(1)
+        c = new Creature()
         {
+            Guid = 1,
             Entry = 1,
             Position = new Position() { X = -8949.95f, Y = -132.493f, Z = 83.5312f, Orientation = 0.0f },
             Alive = true,

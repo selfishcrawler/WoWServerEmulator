@@ -33,7 +33,7 @@ public sealed class Player : Unit
         }
     }
 
-    public Player(uint guid) : base(guid, (int)PLAYER_END)
+    public Player() : base((int)PLAYER_END)
     {
         Equipment = new Item[(int)EquipmentSlot.EQUIPMENT_SLOT_COUNT];
     }

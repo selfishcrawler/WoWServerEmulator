@@ -19,7 +19,7 @@ public abstract class BaseEntity
     protected abstract ObjectType ObjectType { get; }
     protected abstract TypeMask TypeMask { get; }
 
-    public uint Guid
+    public virtual uint Guid
     {
         get => _guid;
         init
@@ -71,9 +71,8 @@ public abstract class BaseEntity
     public Position Position { get; set; }
     public required string Name { get; init; }
 
-    protected BaseEntity(uint guid, int bitCount)
+    protected BaseEntity(int bitCount)
     {
-        Guid = guid;
         _fullMask = new BitArray(bitCount, false);
         _updateMask = new BitArray(bitCount, false);
         _fullTable = new SortedDictionary<int, uint>();

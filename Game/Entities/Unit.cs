@@ -7,6 +7,7 @@ public abstract class Unit : BaseEntity
     protected PowerType _powerType;
     protected Unit _target;
 
+    public override required uint Guid { get => base.Guid; init => base.Guid = value; }
     public bool Alive { get; set; }
     public Unit Target
     {
@@ -91,7 +92,7 @@ public abstract class Unit : BaseEntity
         }
     }
 
-    public uint Faction
+    public virtual uint Faction
     {
         get => _faction;
         init
@@ -115,7 +116,7 @@ public abstract class Unit : BaseEntity
     public float TurnRate { get; set; }
     public float PitchRate { get; set; }
 
-    protected Unit(uint guid, int bitCount) : base(guid, bitCount)
+    protected Unit(int bitCount) : base(bitCount)
     {
         TurnRate = MathF.PI;
     }

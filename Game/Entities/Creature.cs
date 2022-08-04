@@ -8,9 +8,11 @@ public class Creature : Unit
     protected override ObjectType ObjectType => ObjectType.Unit;
     protected override TypeMask TypeMask => TypeMask.Unit | TypeMask.Object;
 
-    public Creature(uint guid) : base(guid, (int)UNIT_END)
+    public override required uint Entry { get => base.Entry; init => base.Entry = value; }
+    public override required uint Faction { get => base.Faction; init => base.Faction = value; }
+
+    public Creature() : base((int)UNIT_END)
     {
-        //SetField(UNIT_FIELD_FACTIONTEMPLATE, 954);
         SetField(UNIT_NPC_FLAGS, 0);
         SetField(UNIT_DYNAMIC_FLAGS, 0);
         SetField(UNIT_FIELD_FLAGS, 0x8);

@@ -333,8 +333,9 @@ public partial class WorldSession
         Race race = (Race)charInfo[2];
         Gender gender = (Gender)charInfo[4];
 
-        ActiveCharacter = new Player(guid)
+        ActiveCharacter = new Player()
         {
+            Guid = guid,
             Name = charInfo[0].ToString(),
             Alive = true,
             CurrentHealth = 100,

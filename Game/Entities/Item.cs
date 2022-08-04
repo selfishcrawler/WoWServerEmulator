@@ -9,7 +9,8 @@ public class Item : BaseEntity
     public override ReadOnlySpan<byte> HighGuid => ReadOnlySpan<byte>.Empty;//_highGuidBytes;
     protected override ObjectType ObjectType => ObjectType.Item;
     protected override TypeMask TypeMask => TypeMask.Object | TypeMask.Item;
-    
+
+    public override required uint Entry { get => base.Entry; init => base.Entry = value; }
     public Unit Owner
     {
         get => _owner;
@@ -25,7 +26,7 @@ public class Item : BaseEntity
     public required ItemClass ItemClass { get; init; }
     public required ItemSubclass ItemSubclass { get; init; }
 
-    public Item() : base(0, (int)ITEM_END) // don't need guid for items?
+    public Item() : base((int)ITEM_END) // don't need guid for items?
     {
     }
 }
