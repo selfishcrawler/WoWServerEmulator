@@ -5,8 +5,7 @@ public class Item : BaseEntity
 {
     protected Unit _owner;
 
-    private static readonly byte[] _highGuidBytes = BitConverter.GetBytes((uint)Entities.HighGuid.Item);
-    public override ReadOnlySpan<byte> HighGuid => _highGuidBytes;
+    public override uint HighGuid => (uint)Entities.HighGuid.Item;
     protected override ObjectType ObjectType => ObjectType.Item;
     protected override TypeMask TypeMask => TypeMask.Object | TypeMask.Item;
 
@@ -17,8 +16,8 @@ public class Item : BaseEntity
         set
         {
             _owner = value;
-            SetField(ITEM_FIELD_OWNER, BitConverter.ToUInt32(_owner.LowGuid));
-            SetField(ITEM_FIELD_OWNER + 1, BitConverter.ToUInt32(_owner.HighGuid));
+            SetField(ITEM_FIELD_OWNER, _owner.Guid);
+            SetField(ITEM_FIELD_OWNER + 1, _owner.HighGuid);
         }
     }
 

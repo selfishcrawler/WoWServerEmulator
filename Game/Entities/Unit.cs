@@ -7,7 +7,6 @@ public abstract class Unit : BaseEntity
     protected PowerType _powerType;
     protected Unit _target;
 
-    public override required uint Guid { get => base.Guid; init => base.Guid = value; }
     public bool Alive { get; set; }
     public Unit Target
     {
@@ -15,8 +14,8 @@ public abstract class Unit : BaseEntity
         set
         {
             _target = value;
-            SetField(UNIT_FIELD_TARGET, BitConverter.ToUInt32(_target.LowGuid));
-            SetField(UNIT_FIELD_TARGET + 1, BitConverter.ToUInt32(_target.HighGuid));
+            SetField(UNIT_FIELD_TARGET, _target.Guid);
+            SetField(UNIT_FIELD_TARGET + 1, _target.HighGuid);
         }
     }
 

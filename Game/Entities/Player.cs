@@ -3,8 +3,7 @@ using static EUnitFields;
 
 public sealed class Player : Unit
 {
-    private static readonly byte[] _highGuidBytes = BitConverter.GetBytes((uint)Entities.HighGuid.Player);
-    public override ReadOnlySpan<byte> HighGuid => _highGuidBytes;
+    public override uint HighGuid => (uint)Entities.HighGuid.Player;
     protected override ObjectType ObjectType => ObjectType.Player;
     protected override TypeMask TypeMask => TypeMask.Player | TypeMask.Unit | TypeMask.Object;
 

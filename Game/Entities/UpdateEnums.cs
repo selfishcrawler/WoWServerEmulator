@@ -52,7 +52,7 @@ public enum TypeMask
     Seer            = Player | Unit | DynamicObject,
 }
 
-public enum HighGuid
+public enum HighGuid : uint
 {
     Item            = 0x4000,
     Container       = 0x4000,

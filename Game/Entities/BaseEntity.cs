@@ -19,11 +19,10 @@ public abstract class BaseEntity
     protected abstract ObjectType ObjectType { get; }
     protected abstract TypeMask TypeMask { get; }
 
-    public ReadOnlySpan<byte> PackedGuid => _packedGuid.AsSpan();
-    public ReadOnlySpan<byte> LowGuid => BitConverter.GetBytes(_guid);
-    public abstract ReadOnlySpan<byte> HighGuid { get; }
+    public ReadOnlySpan<byte> PackedGuid => _packedGuid;
+    public abstract uint HighGuid { get; }
 
-    public virtual uint Guid
+    public required unsafe uint Guid
     {
         get => _guid;
         init
@@ -31,25 +30,29 @@ public abstract class BaseEntity
             _guid = value;
             Span<byte> packed = stackalloc byte[sizeof(ulong) + 1];
             packed[0] = 0; //guid mask
-            var guidBytes = BitConverter.GetBytes(_guid);
+            var guidBytes = new ReadOnlySpan<byte>(&value, sizeof(uint));
             int count = 1;
             for (int i = 0; i < sizeof(uint); i++)
+            {
                 if (guidBytes[i] != 0)
                 {
                     packed[0] |= (byte)(1 << i);
                     packed[count++] = guidBytes[i];
                 }
+            }
+            uint highguid = HighGuid;
+            var highGuidBytes = new ReadOnlySpan<byte>(&highguid, sizeof(uint));
             for (int i = 0; i < sizeof(uint); i++)
             {
-                if (HighGuid[i] != 0)
+                if (highGuidBytes[i] != 0)
                 {
                     packed[0] |= (byte)(1 << (i + 4));
-                    packed[count++] = HighGuid[i];
+                    packed[count++] = highGuidBytes[i];
                 }
             }
             _packedGuid = packed[..count].ToArray();
-            SetField(OBJECT_FIELD_GUID, BitConverter.ToUInt32(LowGuid));
-            SetField(OBJECT_FIELD_GUID + 1, BitConverter.ToUInt32(HighGuid));
+            SetField(OBJECT_FIELD_GUID, _guid);
+            SetField(OBJECT_FIELD_GUID + 1, highguid);
         }
     }
 

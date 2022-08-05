@@ -3,8 +3,7 @@ using static EUnitFields;
 
 public class Creature : Unit
 {
-    private static readonly byte[] _highGuidBytes = BitConverter.GetBytes((uint)Entities.HighGuid.Unit);
-    public override ReadOnlySpan<byte> HighGuid => _highGuidBytes;
+    public override uint HighGuid => (uint)Entities.HighGuid.Unit;
     protected override ObjectType ObjectType => ObjectType.Unit;
     protected override TypeMask TypeMask => TypeMask.Unit | TypeMask.Object;
 
