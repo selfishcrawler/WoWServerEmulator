@@ -19,6 +19,10 @@ public abstract class BaseEntity
     protected abstract ObjectType ObjectType { get; }
     protected abstract TypeMask TypeMask { get; }
 
+    public ReadOnlySpan<byte> PackedGuid => _packedGuid.AsSpan();
+    public ReadOnlySpan<byte> LowGuid => BitConverter.GetBytes(_guid);
+    public abstract ReadOnlySpan<byte> HighGuid { get; }
+
     public virtual uint Guid
     {
         get => _guid;
@@ -39,7 +43,7 @@ public abstract class BaseEntity
             {
                 if (HighGuid[i] != 0)
                 {
-                    packed[0] |= (byte)(1 << (i+4));
+                    packed[0] |= (byte)(1 << (i + 4));
                     packed[count++] = HighGuid[i];
                 }
             }
@@ -49,9 +53,6 @@ public abstract class BaseEntity
         }
     }
 
-    public ReadOnlySpan<byte> PackedGuid => _packedGuid.AsSpan();
-    public ReadOnlySpan<byte> LowGuid => BitConverter.GetBytes(_guid);
-    public abstract ReadOnlySpan<byte> HighGuid { get; }
     public virtual uint Entry
     {
         get => _entry;
@@ -61,6 +62,7 @@ public abstract class BaseEntity
             SetField(OBJECT_FIELD_ENTRY, value);
         }
     }
+
     public float Scale
     {
         get => _scale;
@@ -70,7 +72,9 @@ public abstract class BaseEntity
             SetField(OBJECT_FIELD_SCALE_X, value);
         }
     }
+
     public Position Position { get; set; }
+
     public required string Name { get; init; }
 
     protected BaseEntity(int bitCount)

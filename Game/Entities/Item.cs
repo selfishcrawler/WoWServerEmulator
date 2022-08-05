@@ -5,8 +5,8 @@ public class Item : BaseEntity
 {
     protected Unit _owner;
 
-    //private static readonly byte[] _highGuidBytes = BitConverter.GetBytes((uint)Entities.HighGuid.Item);
-    public override ReadOnlySpan<byte> HighGuid => ReadOnlySpan<byte>.Empty;//_highGuidBytes;
+    private static readonly byte[] _highGuidBytes = BitConverter.GetBytes((uint)Entities.HighGuid.Item);
+    public override ReadOnlySpan<byte> HighGuid => _highGuidBytes;
     protected override ObjectType ObjectType => ObjectType.Item;
     protected override TypeMask TypeMask => TypeMask.Object | TypeMask.Item;
 
@@ -26,7 +26,7 @@ public class Item : BaseEntity
     public required ItemClass ItemClass { get; init; }
     public required ItemSubclass ItemSubclass { get; init; }
 
-    public Item() : base((int)ITEM_END) // don't need guid for items?
+    public Item() : base((int)ITEM_END)
     {
     }
 }
