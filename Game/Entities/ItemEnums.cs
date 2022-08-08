@@ -1,5 +1,17 @@
 ﻿namespace Game.Entities;
 
+public enum ItemQuality : uint
+{
+    Poor,
+    Normal,
+    Uncommon,
+    Rare,
+    Epic,
+    Legendary,
+    Artifact,
+    Heirloom,
+}
+
 public enum InventoryType : uint
 {
     NonEquip,

@@ -57,14 +57,15 @@ public class ItemPrototype : Prototype
         ms.Write(BuyPrice);
         ms.Write(SellPrice);
         ms.Write(InventoryType);
-        ms.Write(AllowableClass);
-        ms.Write(AllowableRace);
+        ms.Write((uint)AllowableClass);
+        ms.Write((uint)AllowableRace);
         ms.Write(ItemLevel);
         ms.Write(RequiredLevel);
         ms.Write(RequiredSkill);
         ms.Write(RequiredSkillRank);
         ms.Write(RequiredSpell);
         ms.Write(RequiredHonorRank);
+        ms.Write(RequiredCityRank);
         ms.Write(RequiredReputationFaction);
         ms.Write(RequiredReputationRank);
         ms.Write(MaxCount);
@@ -133,11 +134,18 @@ public class ItemPrototype : Prototype
         ms.Write(HolidayID);
     }
 
+    public ItemPrototype()
+    {
+        Damages = new Damage[MaxDamages];
+        Spells = new ItemSpell[MaxSpells];
+        Sockets = new ItemSocket[MaxSockets];
+    }
+
     public required ItemClass ItemClass { get; init; }
     public required ItemSubclass ItemSubclass { get; init; }
     public required ItemSubclass SoundOverrideSubclass { get; init; }
     public required uint DisplayID { get; init; }
-    public required uint Quality { get; init; }
+    public required ItemQuality Quality { get; init; }
     public required uint Flags { get; init; }
     public required uint Flags2 { get; init; }
     public required uint BuyCount { get; init; }
@@ -162,12 +170,12 @@ public class ItemPrototype : Prototype
     public required ItemStat[] ItemStats { get; init; }
     public required uint ScalingStatDistribution { get; init; }
     public required uint ScalingStatValue { get; init; }
-    public required Damage[] Damages { get; init; }
+    public Damage[] Damages { get; private init; }
     public required uint[] Resistances { get; init; }
     public required uint Delay { get; init; }
     public required uint AmmoType { get; init; }
     public required float RangedAmmoRange { get; init; }
-    public required ItemSpell[] Spells { get; init; }
+    public ItemSpell[] Spells { get; private init; }
     public required uint Bonding { get; init; }
     public required string Description { get; init; }
     public required uint PageText { get; init; }
@@ -186,7 +194,7 @@ public class ItemPrototype : Prototype
     public required uint Map { get; init; }
     public required uint BagFamily { get; init; }
     public required uint TotemCategory { get; init; }
-    public required ItemSocket[] Sockets { get; init; }
+    public ItemSocket[] Sockets { get; private init; }
     public required uint SocketBonus { get; init; }
     public required uint GemProperties { get; init; }
     public required uint RequiredDisenchantSkill { get; init; }
@@ -194,10 +202,9 @@ public class ItemPrototype : Prototype
     public required uint Duration { get; init; }
     public required uint ItemLimitCategory { get; init; }
     public required uint HolidayID { get; init; }
-    public required uint ScriptID { get; init; }
     public required uint DisenchantID { get; init; }
     public required uint FoodType { get; init; }
     public required uint MinMoneyLoot { get; init; }
     public required uint MaxMoneyLoot { get; init; }
-    public required uint FlagsCu { get; init; }
+    public required uint FlagsCustom { get; init; }
 }

@@ -10,7 +10,7 @@ public sealed class Player : Unit
     protected override TypeMask TypeMask => TypeMask.Player | TypeMask.Unit | TypeMask.Object;
 
     public override Prototype Prototype => null;
-    public Item[] Equipment { get; init; }
+    public Item[] Equipment { get; private init; }
     public override required Race Race
     {
         get => base.Race;
@@ -37,6 +37,8 @@ public sealed class Player : Unit
     public Player() : base((int)PLAYER_END)
     {
         Equipment = new Item[(int)EquipmentSlot.EQUIPMENT_SLOT_COUNT];
+        SetField(PLAYER_VISIBLE_ITEM_1_ENTRYID, 34243);
+        SetField(PLAYER_VISIBLE_ITEM_1_ENCHANTMENT, 0);
     }
 
     public void BuildCreatePacket(MemoryStream ms, bool self = true)

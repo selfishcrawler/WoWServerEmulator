@@ -16,6 +16,7 @@ public abstract class Prototype
         WritePrototypeValues(ms);
 
         byte[] retbuf = new byte[ms.Position];
+        ms.Position = 0;
         ms.ReadExactly(retbuf, 0, retbuf.Length);
         return retbuf;
     }
