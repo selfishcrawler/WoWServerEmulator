@@ -17,22 +17,30 @@ public static class MemoryStreamExtensions
 
     public static void Write(this MemoryStream ms, ushort data)
     {
-        ms.Write(BitConverter.GetBytes(data));
+        Span<byte> dataBytes = stackalloc byte[sizeof(ushort)];
+        BitConverter.TryWriteBytes(dataBytes, data);
+        ms.Write(dataBytes);
     }
 
     public static void Write(this MemoryStream ms, uint data)
     {
-        ms.Write(BitConverter.GetBytes(data));
+        Span<byte> dataBytes = stackalloc byte[sizeof(uint)];
+        BitConverter.TryWriteBytes(dataBytes, data);
+        ms.Write(dataBytes);
     }
 
     public static void Write(this MemoryStream ms, ulong data)
     {
-        ms.Write(BitConverter.GetBytes(data));
+        Span<byte> dataBytes = stackalloc byte[sizeof(ulong)];
+        BitConverter.TryWriteBytes(dataBytes, data);
+        ms.Write(dataBytes);
     }
 
     public static void Write(this MemoryStream ms, float data)
     {
-        ms.Write(BitConverter.GetBytes(data));
+        Span<byte> dataBytes = stackalloc byte[sizeof(float)];
+        BitConverter.TryWriteBytes(dataBytes, data);
+        ms.Write(dataBytes);
     }
 
     public static void Write(this MemoryStream ms, bool data)
@@ -52,7 +60,6 @@ public static class MemoryStreamExtensions
 
     public static void Reset(this MemoryStream ms)
     {
-        ms.Seek(0, SeekOrigin.Begin);
+        ms.Position = 0;
     }
-
 }

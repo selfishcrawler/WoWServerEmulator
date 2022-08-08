@@ -7,7 +7,11 @@ public static class NetworkStreamExtensions
 {
     public static void Write(this NetworkStream ns, in ServerPacketHeader header)
     {
-        ns.Write(BitConverter.GetBytes(header.LengthBigEndian));
-        ns.Write(BitConverter.GetBytes((ushort)header.Opcode));
+        Span<byte> headerBytes = stackalloc byte[2*sizeof(ushort)];
+        BitConverter.TryWriteBytes(headerBytes, header.LengthBigEndian);
+        BitConverter.TryWriteBytes(headerBytes[2..], (ushort)header.Opcode);
+        ns.Write(headerBytes);
+        //ns.Write(BitConverter.GetBytes(header.LengthBigEndian));
+        //ns.Write(BitConverter.GetBytes((ushort)header.Opcode));
     }
 }
