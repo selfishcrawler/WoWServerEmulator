@@ -68,8 +68,8 @@ public class ARC4
     public void Encrypt(ref ServerPacketHeader header)
     {
         Span<byte> data = stackalloc byte[4];
-        BitConverter.GetBytes(header.LengthBigEndian).CopyTo(data);
-        BitConverter.GetBytes((ushort)header.Opcode).CopyTo(data[2..]);
+        BitConverter.TryWriteBytes(data, header.LengthBigEndian);
+        BitConverter.TryWriteBytes(data[2..], (ushort)header.Opcode);
         Encrypt(data);
         header.LengthBigEndian = BitConverter.ToUInt16(data);
         header.Opcode = (Opcode)BitConverter.ToUInt16(data[2..]);

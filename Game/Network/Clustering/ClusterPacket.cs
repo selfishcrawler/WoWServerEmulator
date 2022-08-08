@@ -9,14 +9,15 @@ public abstract class ClusterPacket
 {
     private static object lockObject = new();
 
-    public void Send(NetworkStream stream)
+    public unsafe void Send(NetworkStream stream)
     {
         using MemoryStream buffer = new(100);
         JsonSerializer.Serialize(buffer, this);
         buffer.Reset();
         lock (lockObject)
         {
-            stream.Write(BitConverter.GetBytes((int)buffer.Length));
+            int length = (int)buffer.Length;
+            stream.Write(new ReadOnlySpan<byte>(&length, sizeof(uint)));
             buffer.CopyTo(stream);
         }
     }

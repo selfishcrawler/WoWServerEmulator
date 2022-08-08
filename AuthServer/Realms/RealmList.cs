@@ -60,9 +60,9 @@ public class RealmList
             length += realm.Length;
         Span<byte> buffer = stackalloc byte[9];
         buffer[0] = (byte)AuthCommand.REALMLIST;
-        BitConverter.GetBytes(length).CopyTo(buffer[1..]);
-        BitConverter.GetBytes(0).CopyTo(buffer[3..]);
-        BitConverter.GetBytes((ushort)_realms.Count).CopyTo(buffer[7..]);
+        BitConverter.TryWriteBytes(buffer[1..], length);
+        BitConverter.TryWriteBytes(buffer[3..], 0);
+        BitConverter.TryWriteBytes(buffer[7..], (ushort)_realms.Count);
 
         stream.Write(buffer);
         foreach (var realm in _realms.Values)

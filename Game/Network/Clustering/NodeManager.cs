@@ -13,7 +13,7 @@ public class NodeManager : INodeManager
     private readonly Dictionary<int, int> _nodeMappings;
     private readonly Dictionary<int, IPEndPoint> _nodeAddresses;
 
-    public NodeManager(int nodeId, IPAddress address, int port)
+    public unsafe NodeManager(int nodeId, IPAddress address, int port)
     {
         _sessions = new List<WorldSession>();
         _pendingWorldEnter = new Dictionary<int, uint>();
@@ -31,7 +31,7 @@ public class NodeManager : INodeManager
         {
             _nodeSession.Connect(address, port);
             _stream = _nodeSession.GetStream();
-            _stream.Write(BitConverter.GetBytes(nodeId));
+            _stream.Write(new ReadOnlySpan<byte>(&nodeId, sizeof(uint)));
             _ = ReceiveCommands();
         }
         catch

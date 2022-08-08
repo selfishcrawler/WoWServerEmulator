@@ -32,7 +32,7 @@ public class Realm
         set
         {
             _population = value;
-            BitConverter.GetBytes(_population).AsSpan().CopyTo(_bytes.AsSpan()[_populationOffset..]);
+            BitConverter.TryWriteBytes(_bytes[_populationOffset..], _population);
         }
     }
     
@@ -62,7 +62,7 @@ public class Realm
     public ushort Build
     {
         get => BitConverter.ToUInt16(_bytes.AsSpan()[(_populationOffset + 9)..]);
-        init => BitConverter.GetBytes(value).AsSpan().CopyTo(_bytes.AsSpan()[(_populationOffset + 9)..]);
+        init => BitConverter.TryWriteBytes(_bytes[(_populationOffset + 9)..], value);
     }
 
     public ushort Length

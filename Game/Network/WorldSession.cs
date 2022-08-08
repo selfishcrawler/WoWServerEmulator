@@ -121,7 +121,7 @@ public partial class WorldSession
         Span<byte> host = stackalloc byte[6];
         Span<byte> hash = stackalloc byte[20];
         ip.TryWriteBytes(host, out _);
-        BitConverter.GetBytes(port).CopyTo(host[4..]);
+        BitConverter.TryWriteBytes(host[4..], port);
         HMACSHA1.HashData(_sessionKey, host, hash);
 
         _smsg.Write(host);
@@ -537,10 +537,7 @@ public partial class WorldSession
         SendPacket(SMSG_ACCOUNT_DATA_TIMES);
     }
 
-    private void HandleRedirectionFailed(ClientPacketHeader header)
-    {
-        WorldManager.NodeManager.RedirectionFailed(this);
-    }
+    private void HandleRedirectionFailed(ClientPacketHeader header) => WorldManager.NodeManager.RedirectionFailed(this);
 
     private void UnhandledPacket(ClientPacketHeader header)
     {
@@ -593,7 +590,7 @@ public partial class WorldSession
             Span<byte> concat = stackalloc byte[login.Length + 52];
             login.CopyTo(concat);
             (stackalloc byte[] { 0, 0, 0, 0 }).CopyTo(concat[login.Length..]);
-            BitConverter.GetBytes(pkt.Seed).CopyTo(concat[(login.Length + 4)..]);
+            BitConverter.TryWriteBytes(concat[(login.Length + 4)..], pkt.Seed);
             _seed.CopyTo(concat[(login.Length + 8)..]);
 
             if (!QueryAccountInfo())
@@ -718,10 +715,7 @@ public partial class WorldSession
         }
     }
 
-    private void SendPacket(Opcode opcode)
-    {
-        SendPacket(_smsg, opcode);
-    }
+    private void SendPacket(Opcode opcode) => SendPacket(_smsg, opcode);
 
     public void Disconnect()
     {

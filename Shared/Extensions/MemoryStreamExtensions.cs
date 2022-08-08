@@ -4,41 +4,19 @@ namespace Shared.Extensions;
 
 public static class MemoryStreamExtensions
 {
-    public static unsafe void Write<T>(this MemoryStream ms, T Data) where T : unmanaged, Enum
-    {
-        var bytes = new ReadOnlySpan<byte>(&Data, sizeof(T));
-        ms.Write(bytes);
-    }
+    public static unsafe void Write<T>(this MemoryStream ms, T Data) where T : unmanaged, Enum => ms.Write(new ReadOnlySpan<byte>(&Data, sizeof(T)));
 
-    public static void Write(this MemoryStream ms, byte data)
-    {
-        ms.WriteByte(data);
-    }
+    public static void Write(this MemoryStream ms, byte data) => ms.WriteByte(data);
 
-    public static unsafe void Write(this MemoryStream ms, ushort data)
-    {
-        ms.Write(new ReadOnlySpan<byte>(&data, sizeof(ushort)));
-    }
+    public static unsafe void Write(this MemoryStream ms, ushort data) => ms.Write(new ReadOnlySpan<byte>(&data, sizeof(ushort)));
 
-    public static unsafe void Write(this MemoryStream ms, uint data)
-    {
-        ms.Write(new ReadOnlySpan<byte>(&data, sizeof(uint)));
-    }
+    public static unsafe void Write(this MemoryStream ms, uint data) => ms.Write(new ReadOnlySpan<byte>(&data, sizeof(uint)));
 
-    public static unsafe void Write(this MemoryStream ms, ulong data)
-    {
-        ms.Write(new ReadOnlySpan<byte>(&data, sizeof(ulong)));
-    }
+    public static unsafe void Write(this MemoryStream ms, ulong data) => ms.Write(new ReadOnlySpan<byte>(&data, sizeof(ulong)));
 
-    public static unsafe void Write(this MemoryStream ms, float data)
-    {
-        ms.Write(new ReadOnlySpan<byte>(&data, sizeof(float)));
-    }
+    public static unsafe void Write(this MemoryStream ms, float data) => ms.Write(new ReadOnlySpan<byte>(&data, sizeof(float)));
 
-    public static void Write(this MemoryStream ms, bool data)
-    {
-        ms.WriteByte((byte)(data ? 1 : 0));
-    }
+    public static void Write(this MemoryStream ms, bool data) => ms.WriteByte((byte)(data ? 1 : 0));
 
     public static void Write(this MemoryStream ms, string data, bool terminated = true)
     {
@@ -50,8 +28,5 @@ public static class MemoryStreamExtensions
         ms.Write(buf);
     }
 
-    public static void Reset(this MemoryStream ms)
-    {
-        ms.Position = 0;
-    }
+    public static void Reset(this MemoryStream ms) => ms.Position = 0;
 }
