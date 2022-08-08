@@ -1,6 +1,7 @@
 ﻿using Game.Entities;
 using Game.Network;
 using Game.Network.Clustering;
+using Game.Prototypes;
 using Shared.RealmInfo;
 
 namespace Game.World;
@@ -8,6 +9,8 @@ namespace Game.World;
 public static class WorldManager
 {
     private static List<WorldSession> _sessions;
+    private static Dictionary<uint, ItemPrototype> _itemPrototypes;
+
     public static INodeManager NodeManager { get; private set; }
     public static byte RealmID { get; private set; }
     public static RealmTimeZone RealmTimeZone { get; private set; }
@@ -28,10 +31,9 @@ public static class WorldManager
         c = new Creature()
         {
             Guid = 1,
-            Entry = 1,
+            Prototype = new CreaturePrototype() { Entry = 1, Name="TestUnit" },
             Position = new Position() { X = -8949.95f, Y = -132.493f, Z = 83.5312f, Orientation = 0.0f },
             Alive = true,
-            Name = "TestUnit",
             CurrentHealth = 50,
             MaxHealth = 150,
             Level = 5,
@@ -45,6 +47,11 @@ public static class WorldManager
         };
         c.SetCurrentPower(PowerType.Mana, 1);
         c.SetCurrentPower(PowerType.Mana, 100);
+    }
+
+    public static void InitItems()
+    {
+        _itemPrototypes = new Dictionary<uint, ItemPrototype>();
     }
 
     public static void AddSession(WorldSession session)
@@ -73,7 +80,7 @@ public static class WorldManager
 
             //check distance
             surroundingPlayers.Write((uint)1);
-            session.ActiveCharacter.BuildCreatePacket(surroundingPlayers, false);
+            session.ActiveCharacter?.BuildCreatePacket(surroundingPlayers, false);
             self.SendPacket(surroundingPlayers, Opcode.SMSG_UPDATE_OBJECT);
             session.SendPacket(broadcast, Opcode.SMSG_UPDATE_OBJECT);
         }
@@ -104,6 +111,11 @@ public static class WorldManager
                 if (session.ActiveCharacter.Guid == guid)
                     return session.ActiveCharacter;
         return null;
+    }
+
+    public static ItemPrototype GetItemProtoByEntry(uint entry)
+    {
+        return _itemPrototypes.TryGetValue(entry, out var proto) ? proto : null;
     }
 
     // map, zone, coords

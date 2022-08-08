@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using Game.Prototypes;
 
 namespace Game.Entities;
 using static EObjectFields;
@@ -6,15 +7,33 @@ using static EObjectFields;
 public struct Position
 {
     public float X, Y, Z, Orientation;
+
+    public float GetDistance2D(in Position other) => MathF.Sqrt(GetSquaredDistance2D(other));
+
+    public float GetDistance3D(in Position other) => MathF.Sqrt(GetSquaredDistance3D(other));
+
+    public float GetSquaredDistance2D(in Position other)
+    {
+        var xdiff = X - other.X;
+        var ydiff = Y - other.Y;
+        return xdiff * xdiff + ydiff * ydiff;
+    }
+
+    public float GetSquaredDistance3D(in Position other)
+    {
+        var zdiff = Z - other.Z;
+        return GetSquaredDistance2D(other) + zdiff * zdiff;
+    }
 }
 
 public abstract class BaseEntity
 {
     protected readonly BitArray _fullMask, _updateMask;
     protected readonly SortedDictionary<int, uint> _fullTable, _updateTable;
-    protected readonly uint _guid, _entry;
+    protected readonly uint _guid;
     protected readonly byte[] _packedGuid;
     protected readonly byte _maskSize;
+    protected readonly Prototype _prototype;
     protected float _scale;
     protected abstract ObjectType ObjectType { get; }
     protected abstract TypeMask TypeMask { get; }
@@ -56,13 +75,13 @@ public abstract class BaseEntity
         }
     }
 
-    public virtual uint Entry
+    public virtual Prototype Prototype
     {
-        get => _entry;
+        get => _prototype;
         init
         {
-            _entry = value;
-            SetField(OBJECT_FIELD_ENTRY, value);
+            _prototype = value;
+            SetField(OBJECT_FIELD_ENTRY, _prototype.Entry);
         }
     }
 
@@ -78,7 +97,7 @@ public abstract class BaseEntity
 
     public Position Position { get; set; }
 
-    public required string Name { get; init; }
+    public virtual string Name { get; init; }
 
     protected BaseEntity(int bitCount)
     {

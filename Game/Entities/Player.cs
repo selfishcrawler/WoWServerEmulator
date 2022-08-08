@@ -1,4 +1,6 @@
 ﻿namespace Game.Entities;
+
+using Game.Prototypes;
 using static EUnitFields;
 
 public sealed class Player : Unit
@@ -7,7 +9,7 @@ public sealed class Player : Unit
     protected override ObjectType ObjectType => ObjectType.Player;
     protected override TypeMask TypeMask => TypeMask.Player | TypeMask.Unit | TypeMask.Object;
 
-    public override uint Entry => 0;
+    public override Prototype Prototype => null;
     public Item[] Equipment { get; init; }
     public override required Race Race
     {

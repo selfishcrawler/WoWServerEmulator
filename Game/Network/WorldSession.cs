@@ -438,6 +438,27 @@ public partial class WorldSession
         SendPacket(SMSG_NAME_QUERY_RESPONSE);
     }
 
+    private void HandleItemQuerySingle(ClientPacketHeader header)
+    {
+        const uint ItemProtoNotExistMask = 0x80000000;
+
+        if (header.Length != sizeof(uint))
+        {
+            Disconnect();
+            return;
+        }
+
+        uint entry = BitConverter.ToUInt32(_cmsg);
+        var itemProto = WorldManager.GetItemProtoByEntry(entry);
+
+        if (itemProto is null)
+            _smsg.Write(entry | ItemProtoNotExistMask);
+        else
+            _smsg.Write(itemProto.PrototypeResponseBytes);
+
+        SendPacket(SMSG_ITEM_QUERY_SINGLE_RESPONSE);
+    }
+
     private void HandleMovementPacket(ClientPacketHeader header)
     {
         WorldManager.BroadcastMovementPacket(this, _cmsg.ToArray(), header.Opcode);

@@ -22,6 +22,14 @@ public enum Opcode : uint
     CMSG_NAME_QUERY                             = 0x050,
     SMSG_NAME_QUERY_RESPONSE                    = 0x051,
 
+    CMSG_ITEM_QUERY_SINGLE                      = 0x056,
+    CMSG_ITEM_QUERY_MULTIPLE                    = 0x057,
+    SMSG_ITEM_QUERY_SINGLE_RESPONSE             = 0x058,
+    SMSG_ITEM_QUERY_MULTIPLE_RESPONSE           = 0x059,
+
+    CMSG_CREATURE_QUERY                         = 0x060,
+    SMSG_CREATURE_QUERY_RESPONSE                = 0x061,
+
     SMSG_UPDATE_OBJECT                          = 0x0A9,
 
     MSG_MOVE_START_FORWARD                      = 0x0B5,
@@ -120,6 +128,7 @@ public partial class WorldSession
         CMSG_PLAYER_LOGIN => HandlePlayerLogin,
         CMSG_LOGOUT_REQUEST => HandleLogoutRequest,
         CMSG_NAME_QUERY => HandleNameQuery,
+        CMSG_ITEM_QUERY_SINGLE => HandleItemQuerySingle,
 
         MSG_MOVE_START_FORWARD => HandleMovementPacket,
         MSG_MOVE_START_BACKWARD => HandleMovementPacket,

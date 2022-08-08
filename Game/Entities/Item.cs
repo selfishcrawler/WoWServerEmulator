@@ -1,4 +1,6 @@
-﻿namespace Game.Entities;
+﻿using Game.Prototypes;
+
+namespace Game.Entities;
 using static EItemFields;
 
 public class Item : BaseEntity
@@ -9,7 +11,8 @@ public class Item : BaseEntity
     protected override ObjectType ObjectType => ObjectType.Item;
     protected override TypeMask TypeMask => TypeMask.Object | TypeMask.Item;
 
-    public override required uint Entry { get => base.Entry; init => base.Entry = value; }
+    public new required ItemPrototype Prototype { get => (ItemPrototype)base.Prototype; init => base.Prototype = value; }
+    public override string Name => Prototype.Name;
     public Unit Owner
     {
         get => _owner;
@@ -20,10 +23,6 @@ public class Item : BaseEntity
             SetField(ITEM_FIELD_OWNER + 1, _owner.HighGuid);
         }
     }
-
-    public required uint DisplayID { get; init; }
-    public required ItemClass ItemClass { get; init; }
-    public required ItemSubclass ItemSubclass { get; init; }
 
     public Item() : base((int)ITEM_END)
     {

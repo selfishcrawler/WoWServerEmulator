@@ -1,4 +1,6 @@
 ﻿namespace Game.Entities;
+
+using Game.Prototypes;
 using static EUnitFields;
 
 public class Creature : Unit
@@ -7,7 +9,7 @@ public class Creature : Unit
     protected override ObjectType ObjectType => ObjectType.Unit;
     protected override TypeMask TypeMask => TypeMask.Unit | TypeMask.Object;
 
-    public override required uint Entry { get => base.Entry; init => base.Entry = value; }
+    public new required CreaturePrototype Prototype { get => (CreaturePrototype)base.Prototype; init => base.Prototype = value; }
     public override required uint Faction { get => base.Faction; init => base.Faction = value; }
 
     public Creature() : base((int)UNIT_END)

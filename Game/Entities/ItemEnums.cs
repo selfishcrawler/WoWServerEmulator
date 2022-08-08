@@ -1,5 +1,38 @@
 ﻿namespace Game.Entities;
 
+public enum InventoryType : uint
+{
+    NonEquip,
+    Head,
+    Neck,
+    Shoulders,
+    Body,
+    Chest,
+    Waist,
+    Legs,
+    Feet,
+    Wrists,
+    Hands,
+    Finger,
+    Trinket,
+    Weapon,
+    Shield,
+    Ranged,
+    Cloak,
+    Weapon2H,
+    Bag,
+    Tabard,
+    Robe,
+    WeaponMainHand,
+    WeaponOffHand,
+    Holdable,
+    Ammo,
+    Thrown,
+    RangedRight,
+    Quiver,
+    Relic
+}
+
 public enum EquipmentSlot : byte
 {
     Head,

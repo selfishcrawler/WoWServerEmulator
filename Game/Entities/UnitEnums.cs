@@ -1,5 +1,16 @@
 ﻿namespace Game.Entities;
 
+public enum DamageType : uint
+{
+    Physical,
+    Holy,
+    Fire,
+    Nature,
+    Frost,
+    Shadow,
+    Arcane
+}
+
 [Flags]
 public enum FactionMask : byte
 {

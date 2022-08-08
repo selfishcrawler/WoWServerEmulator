@@ -37,6 +37,7 @@ internal class Program
 
         WorldManager.InitWorld(ID, node);
         WorldManager.InitCreatures();
+        WorldManager.InitItems();
         WorldAcceptor acceptor = new(address, port)
         {
             Timeout = TimeSpan.FromSeconds(3),
