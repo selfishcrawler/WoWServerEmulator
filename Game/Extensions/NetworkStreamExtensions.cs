@@ -11,7 +11,5 @@ public static class NetworkStreamExtensions
         BitConverter.TryWriteBytes(headerBytes, header.LengthBigEndian);
         BitConverter.TryWriteBytes(headerBytes[2..], (ushort)header.Opcode);
         ns.Write(headerBytes);
-        //ns.Write(BitConverter.GetBytes(header.LengthBigEndian));
-        //ns.Write(BitConverter.GetBytes((ushort)header.Opcode));
     }
 }

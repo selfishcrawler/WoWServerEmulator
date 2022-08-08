@@ -15,32 +15,24 @@ public static class MemoryStreamExtensions
         ms.WriteByte(data);
     }
 
-    public static void Write(this MemoryStream ms, ushort data)
+    public static unsafe void Write(this MemoryStream ms, ushort data)
     {
-        Span<byte> dataBytes = stackalloc byte[sizeof(ushort)];
-        BitConverter.TryWriteBytes(dataBytes, data);
-        ms.Write(dataBytes);
+        ms.Write(new ReadOnlySpan<byte>(&data, sizeof(ushort)));
     }
 
-    public static void Write(this MemoryStream ms, uint data)
+    public static unsafe void Write(this MemoryStream ms, uint data)
     {
-        Span<byte> dataBytes = stackalloc byte[sizeof(uint)];
-        BitConverter.TryWriteBytes(dataBytes, data);
-        ms.Write(dataBytes);
+        ms.Write(new ReadOnlySpan<byte>(&data, sizeof(uint)));
     }
 
-    public static void Write(this MemoryStream ms, ulong data)
+    public static unsafe void Write(this MemoryStream ms, ulong data)
     {
-        Span<byte> dataBytes = stackalloc byte[sizeof(ulong)];
-        BitConverter.TryWriteBytes(dataBytes, data);
-        ms.Write(dataBytes);
+        ms.Write(new ReadOnlySpan<byte>(&data, sizeof(ulong)));
     }
 
-    public static void Write(this MemoryStream ms, float data)
+    public static unsafe void Write(this MemoryStream ms, float data)
     {
-        Span<byte> dataBytes = stackalloc byte[sizeof(float)];
-        BitConverter.TryWriteBytes(dataBytes, data);
-        ms.Write(dataBytes);
+        ms.Write(new ReadOnlySpan<byte>(&data, sizeof(float)));
     }
 
     public static void Write(this MemoryStream ms, bool data)
