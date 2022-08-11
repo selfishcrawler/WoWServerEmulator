@@ -32,7 +32,7 @@ public class Realm
         set
         {
             _population = value;
-            BitConverter.TryWriteBytes(_bytes[_populationOffset..], _population);
+            BitConverter.TryWriteBytes(_bytes.AsSpan(_populationOffset), _population);
         }
     }
     
@@ -51,24 +51,21 @@ public class Realm
     //SpecifyBuild
     public byte[] Version
     {
-        get => _bytes.AsSpan()[(_populationOffset + 6)..(_populationOffset + 8)].ToArray();
+        get => _bytes.AsSpan(_populationOffset + 6, 3).ToArray();
         init
         {
             if (value.Length != 3)
-                throw new ArgumentException("Wrong version lenght");
-            value.CopyTo(_bytes.AsSpan()[(_populationOffset + 6)..]);
+                throw new ArgumentException("Wrong version length");
+            value.CopyTo(_bytes.AsSpan(_populationOffset + 6, 3));
         }
     }
     public ushort Build
     {
-        get => BitConverter.ToUInt16(_bytes.AsSpan()[(_populationOffset + 9)..]);
-        init => BitConverter.TryWriteBytes(_bytes[(_populationOffset + 9)..], value);
+        get => BitConverter.ToUInt16(_bytes.AsSpan(_populationOffset + 9));
+        init => BitConverter.TryWriteBytes(_bytes.AsSpan(_populationOffset + 9), value);
     }
 
-    public ushort Length
-    {
-        get => (ushort)(Flags.HasFlag(RealmFlags.SPECIFY_BUILD) ? _bytes.Length + 1 : _bytes.Length - 4);
-    }
+    public ushort Length => (ushort)(Flags.HasFlag(RealmFlags.SPECIFY_BUILD) ? _bytes.Length + 1 : _bytes.Length - 4);
 
     public Realm(byte ID, string name, string address)
     {
@@ -79,20 +76,13 @@ public class Realm
         _bytes = new byte[14 + nameBytes.Length + addressBytes.Length];
         _addressOffset = 3 + nameBytes.Length;
         _populationOffset = _addressOffset + addressBytes.Length;
-        nameBytes.CopyTo(_bytes.AsSpan()[3..]);
-        addressBytes.CopyTo(_bytes.AsSpan()[(_addressOffset)..]);
+        nameBytes.CopyTo(_bytes.AsSpan(3));
+        addressBytes.CopyTo(_bytes.AsSpan(_addressOffset));
         this.ID = ID;
     }
 
-    public ReadOnlySpan<byte> GetPrefixBytes()
-    {
-        return _bytes.AsSpan()[2..(_populationOffset + 4)];
-    }
+    public ReadOnlySpan<byte> GetPrefixBytes() => _bytes.AsSpan(2, _populationOffset + 2);
 
     public ReadOnlySpan<byte> GetSuffixBytes()
-    {
-        if (Flags.HasFlag(RealmFlags.SPECIFY_BUILD))
-            return _bytes.AsSpan()[(_populationOffset + 4)..];
-        return _bytes.AsSpan()[(_populationOffset + 4)..(_populationOffset+6)];
-    }
+        => Flags.HasFlag(RealmFlags.SPECIFY_BUILD) ? _bytes.AsSpan(_populationOffset + 4) : _bytes.AsSpan(_populationOffset + 4, 2);
 }

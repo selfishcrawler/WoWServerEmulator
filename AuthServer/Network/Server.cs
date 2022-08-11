@@ -1,7 +1,6 @@
 ﻿using System.Net;
 using System.Net.Sockets;
 using AuthServer.Realms;
-using Shared.Database;
 
 namespace AuthServer.Network;
 

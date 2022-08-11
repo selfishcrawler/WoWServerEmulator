@@ -15,7 +15,7 @@ public class SRP6
     private static readonly BigInteger _b;
     private static readonly byte[] NGHash;
     private const int L = 32; // size of all buffers
-    private const int hashL = 20;
+    private const int hashL = SHA1.HashSizeInBytes;
     private const byte K = 3;
 
     public static readonly byte[] N;
@@ -64,7 +64,7 @@ public class SRP6
         var xAsBigInteger = new BigInteger(x, true);
         var result = BigInteger.ModPow(_G, xAsBigInteger, _N);
 
-        return result.ToByteArray().AsSpan()[..L];
+        return result.ToByteArray().AsSpan(0, L);
     }
 
     public static ReadOnlySpan<byte> GenerateSalt() => RandomNumberGenerator.GetBytes(L);

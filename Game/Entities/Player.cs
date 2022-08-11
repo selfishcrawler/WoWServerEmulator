@@ -1,6 +1,7 @@
 ﻿namespace Game.Entities;
 
 using Game.Prototypes;
+using Game.World;
 using static EUnitFields;
 
 public sealed class Player : Unit
@@ -37,6 +38,15 @@ public sealed class Player : Unit
     public Player() : base((int)PLAYER_END)
     {
         Equipment = new Item[(int)EquipmentSlot.EQUIPMENT_SLOT_COUNT];
+        Equipment[(int)EquipmentSlot.Head] = new Item()
+        {
+            Guid = 1,
+            Prototype = WorldManager.GetItemProtoByEntry(34243),
+            Owner = this,
+            Durability = 100,
+            MaxDurability = 100,
+            StackCount = 1,
+        };
         SetField(PLAYER_VISIBLE_ITEM_1_ENTRYID, 34243);
         SetField(PLAYER_VISIBLE_ITEM_1_ENCHANTMENT, 0);
     }

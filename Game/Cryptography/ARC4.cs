@@ -17,7 +17,7 @@ public class ARC4
         _encryptionState = new byte[256];
         _decryptionState = new byte[256];
         encrX = encrY = decrX = decrY = 0;
-        Span<byte> hash = stackalloc byte[20];
+        Span<byte> hash = stackalloc byte[SHA1.HashSizeInBytes];
         HMACSHA1.HashData(encryptionSeed ?? encryptionKey, sessionKey, hash);
         Init(hash, _encryptionState);
 
@@ -43,10 +43,7 @@ public class ARC4
         }
     }
 
-    private void SwapBytes(Span<byte> state, int x, int y)
-    {
-        (state[x], state[y]) = (state[y], state[x]);
-    }
+    private static void SwapBytes(Span<byte> state, int x, int y) => (state[x], state[y]) = (state[y], state[x]);
 
     private void Encrypt(Span<byte> data)
     {
@@ -90,7 +87,6 @@ public class ARC4
                 data[i] ^= _decryptionState[xorIndex];
             }
         }
-        var header = new ClientPacketHeader(BitConverter.ToUInt16(data), (Opcode)BitConverter.ToUInt32(data[2..]));
-        return header;
+        return new ClientPacketHeader(BitConverter.ToUInt16(data), (Opcode)BitConverter.ToUInt32(data[2..]));
     }
 }

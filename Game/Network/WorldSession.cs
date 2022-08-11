@@ -90,7 +90,10 @@ public partial class WorldSession
         _cts = CancellationTokenSource.CreateLinkedTokenSource(serverToken);
         int bytesRead = await _stream.ReadAsync(_cmsg, 0, ClientHeaderSize, _cts.Token);
         if (bytesRead == 0)
+        {
             Disconnect();
+            return;
+        }
         ProcessAuthSession(serverSeed, clientSeed);
         await HandlePacketFlow();
     }
@@ -105,7 +108,7 @@ public partial class WorldSession
                 Disconnect();
                 return;
             }
-            FindHandler(_cmsg.AsSpan()[..6]);
+            FindHandler(_cmsg.AsSpan(0, 6));
         }
 
         void FindHandler(Span<byte> headerBytes)
@@ -370,8 +373,11 @@ public partial class WorldSession
             _smsg.Write((uint)0xFF);
         SendPacket(SMSG_TUTORIAL_FLAGS);
 
-        _smsg.Write((uint)1); // block count
+        _smsg.Write((uint)2); // block count
         ActiveCharacter.BuildCreatePacket(_smsg);
+        foreach (var item in ActiveCharacter.Equipment)
+            if (item is not null)
+                item.BuildCreatePacket(_smsg);
 
         SendPacket(SMSG_UPDATE_OBJECT);
 
@@ -621,7 +627,7 @@ public partial class WorldSession
     {
         int index = Array.IndexOf<byte>(_cmsg, 0, 0) + 1;
         _username = Encoding.UTF8.GetString(_cmsg, 0, index - 1);
-        Span<byte> hash = _cmsg.AsSpan()[(index + 8)..(index + 28)];
+        Span<byte> hash = _cmsg.AsSpan(index + 8, SHA1.HashSizeInBytes);
 
         if (!QueryAccountInfo())
         {
